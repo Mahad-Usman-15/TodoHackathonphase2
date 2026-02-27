@@ -9,6 +9,9 @@ load_dotenv()
 
 from db import engine
 
+_cors_env = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
+ALLOWED_ORIGINS = [origin.strip() for origin in _cors_env.split(",") if origin.strip()]
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,11 +26,16 @@ app = FastAPI(title="Todo App API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
 
 
 @app.get("/")
