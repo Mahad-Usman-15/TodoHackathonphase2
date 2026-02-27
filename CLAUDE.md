@@ -1,210 +1,378 @@
-# Claude Code Rules
+﻿# CLAUDE.md
 
-This file is generated during init for the selected agent.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-You are an expert AI assistant specializing in Spec-Driven Development (SDD). Your primary goal is to work with the architext to build products.
+# Todo App - Hackathon II
 
-## Task context
+## Project Overview
+This is a monorepo using GitHub Spec-Kit for spec-driven development.
 
-**Your Surface:** You operate on a project level, providing guidance to users and executing development tasks via a defined set of tools.
+## 🤖 CRITICAL: No Manual Coding Allowed
 
-**Your Success is Measured By:**
-- All outputs strictly follow the user intent.
-- Prompt History Records (PHRs) are created automatically and accurately for every user prompt.
-- Architectural Decision Record (ADR) suggestions are made intelligently for significant decisions.
-- All changes are small, testable, and reference code precisely.
+**⚠️ THIS IS A JUDGING REQUIREMENT ⚠️**
 
-## Core Guarantees (Product Promise)
+This entire project MUST be built using Claude Code with ZERO manual coding:
 
-- Record every user input verbatim in a Prompt History Record (PHR) after every user message. Do not truncate; preserve full multiline input.
-- PHR routing (all under `history/prompts/`):
-  - Constitution → `history/prompts/constitution/`
-  - Feature-specific → `history/prompts/<feature-name>/`
-  - General → `history/prompts/general/`
-- ADR suggestions: when an architecturally significant decision is detected, suggest: "📋 Architectural decision detected: <brief>. Document? Run `/sp.adr <title>`." Never auto‑create ADRs; require user consent.
+### What This Means
+- ✅ All code generated via Claude Code prompts
+- ✅ All implementations driven by specifications in `/specs/`
+- ✅ Process, prompts, and iterations will be judged
+- ❌ No manual editing of generated code
+- ❌ No copying code from external sources
+- ❌ No direct file editing outside Claude Code
 
-## Development Guidelines
+### Agentic Dev Stack Workflow
+```
+1. Write Spec        → Create/update file in /specs/features/
+2. Prompt Claude     → "Implement @specs/features/[feature].md"
+3. Claude Reads      → Specs + CLAUDE.md files
+4. Claude Generates  → Complete implementation
+5. Test              → Verify functionality
+6. Iterate           → Update spec if needed, regenerate
+```
 
-### 1. Authoritative Source Mandate:
-Agents MUST prioritize and use MCP tools and CLI commands for all information gathering and task execution. NEVER assume a solution from internal knowledge; all methods require external verification.
+### Example Prompt Pattern
+```
+"Implement user authentication as specified in @specs/features/authentication.md
+Follow patterns in @backend/CLAUDE.md
+Use SQLModel and FastAPI
+Include HTTP-only cookies and JWT tokens"
+```
 
-### 2. Execution Flow:
-Treat MCP servers as first-class tools for discovery, verification, execution, and state capture. PREFER CLI interactions (running commands and capturing outputs) over manual file creation or reliance on internal knowledge.
+**This development approach is a core evaluation criteria for the hackathon.**
 
-### 3. Knowledge capture (PHR) for Every User Input.
-After completing requests, you **MUST** create a PHR (Prompt History Record).
+## Spec-Kit Structure
+Specifications are organized in /specs:
+- /specs/overview.md - Project overview
+- /specs/features/ - Feature specs (what to build)
+- /specs/api/ - API endpoint and MCP tool specs
+- /specs/database/ - Schema and model specs
+- /specs/ui/ - Component and page specs
 
-**When to create PHRs:**
-- Implementation work (code changes, new features)
-- Planning/architecture discussions
-- Debugging sessions
-- Spec/task/plan creation
-- Multi-step workflows
+## Architecture & Technology Stack
 
-**PHR Creation Process:**
+### Layers
+- **Frontend**: Next.js 16+ (App Router), TypeScript, Tailwind CSS
+- **Backend**: Python FastAPI, SQLModel ORM
+- **Database**: Neon Serverless PostgreSQL
+- **Authentication**: HTTP-only cookies, JWT tokens
 
-1) Detect stage
-   - One of: constitution | spec | plan | tasks | red | green | refactor | explainer | misc | general
+### Key Components
+- **Multi-User System**: Each user has isolated data space
+- **RESTful API**: Comprehensive endpoints with user-specific data filtering
+- **Secure Authentication**: JWT-based with user isolation
+- **Task Management**: Full CRUD operations with completion toggling
 
-2) Generate title
-   - 3–7 words; create a slug for the filename.
+## The Shared Secret
+Backend (FastAPI) must use the secret key for JWT signing and verification. This is typically set via environment variable AUTH_SECRET.
 
-2a) Resolve route (all under history/prompts/)
-  - `constitution` → `history/prompts/constitution/`
-  - Feature stages (spec, plan, tasks, red, green, refactor, explainer, misc) → `history/prompts/<feature-name>/` (requires feature context)
-  - `general` → `history/prompts/general/`
+## Frontend Guidelines
 
-3) Prefer agent‑native flow (no shell)
-   - Read the PHR template from one of:
-     - `.specify/templates/phr-template.prompt.md`
-     - `templates/phr-template.prompt.md`
-   - Allocate an ID (increment; on collision, increment again).
-   - Compute output path based on stage:
-     - Constitution → `history/prompts/constitution/<ID>-<slug>.constitution.prompt.md`
-     - Feature → `history/prompts/<feature-name>/<ID>-<slug>.<stage>.prompt.md`
-     - General → `history/prompts/general/<ID>-<slug>.general.prompt.md`
-   - Fill ALL placeholders in YAML and body:
-     - ID, TITLE, STAGE, DATE_ISO (YYYY‑MM‑DD), SURFACE="agent"
-     - MODEL (best known), FEATURE (or "none"), BRANCH, USER
-     - COMMAND (current command), LABELS (["topic1","topic2",...])
-     - LINKS: SPEC/TICKET/ADR/PR (URLs or "null")
-     - FILES_YAML: list created/modified files (one per line, " - ")
-     - TESTS_YAML: list tests run/added (one per line, " - ")
-     - PROMPT_TEXT: full user input (verbatim, not truncated)
-     - RESPONSE_TEXT: key assistant output (concise but representative)
-     - Any OUTCOME/EVALUATION fields required by the template
-   - Write the completed file with agent file tools (WriteFile/Edit).
-   - Confirm absolute path in output.
+### Stack
+- Next.js 16+ (App Router)
+- TypeScript
+- Tailwind CSS
 
-4) Use sp.phr command file if present
-   - If `.**/commands/sp.phr.*` exists, follow its structure.
-   - If it references shell but Shell is unavailable, still perform step 3 with agent‑native tools.
+### Patterns
+- Use server components by default
+- Client components only when needed (interactivity)
+- API calls go through `/lib/api.ts`
 
-5) Shell fallback (only if step 3 is unavailable or fails, and Shell is permitted)
-   - Run: `.specify/scripts/bash/create-phr.sh --title "<title>" --stage <stage> [--feature <name>] --json`
-   - Then open/patch the created file to ensure all placeholders are filled and prompt/response are embedded.
+### Component Structure
+- `/components` - Reusable UI components
+- `/app` - Pages and layouts
 
-6) Routing (automatic, all under history/prompts/)
-   - Constitution → `history/prompts/constitution/`
-   - Feature stages → `history/prompts/<feature-name>/` (auto-detected from branch or explicit feature context)
-   - General → `history/prompts/general/`
+### API Client
+All backend calls should use the api client:
 
-7) Post‑creation validations (must pass)
-   - No unresolved placeholders (e.g., `{{THIS}}`, `[THAT]`).
-   - Title, stage, and dates match front‑matter.
-   - PROMPT_TEXT is complete (not truncated).
-   - File exists at the expected path and is readable.
-   - Path matches route.
+```
+import { api } from '@/lib/api'
+const tasks = await api.getTasks()
+```
 
-8) Report
-   - Print: ID, path, stage, title.
-   - On any failure: warn but do not block the main command.
-   - Skip PHR only for `/sp.phr` itself.
+### Styling
+- Use Tailwind CSS classes
+- No inline styles
+- Follow existing component patterns
 
-### 4. Explicit ADR suggestions
-- When significant architectural decisions are made (typically during `/sp.plan` and sometimes `/sp.tasks`), run the three‑part test and suggest documenting with:
-  "📋 Architectural decision detected: <brief> — Document reasoning and tradeoffs? Run `/sp.adr <decision-title>`"
-- Wait for user consent; never auto‑create the ADR.
+## Backend Guidelines
 
-### 5. Human as Tool Strategy
-You are not expected to solve every problem autonomously. You MUST invoke the user for input when you encounter situations that require human judgment. Treat the user as a specialized tool for clarification and decision-making.
+### Stack
+- FastAPI
+- SQLModel (ORM)
+- Neon PostgreSQL
 
-**Invocation Triggers:**
-1.  **Ambiguous Requirements:** When user intent is unclear, ask 2-3 targeted clarifying questions before proceeding.
-2.  **Unforeseen Dependencies:** When discovering dependencies not mentioned in the spec, surface them and ask for prioritization.
-3.  **Architectural Uncertainty:** When multiple valid approaches exist with significant tradeoffs, present options and get user's preference.
-4.  **Completion Checkpoint:** After completing major milestones, summarize what was done and confirm next steps. 
+### Project Structure
+- `main.py` - FastAPI app entry point
+- `models.py` - SQLModel database models
+- `routes/` - API route handlers
+- `db.py` - Database connection
 
-## Default policies (must follow)
-- Clarify and plan first - keep business understanding separate from technical plan and carefully architect and implement.
-- Do not invent APIs, data, or contracts; ask targeted clarifiers if missing.
-- Never hardcode secrets or tokens; use `.env` and docs.
-- Prefer the smallest viable diff; do not refactor unrelated code.
-- Cite existing code with code references (start:end:path); propose new code in fenced blocks.
-- Keep reasoning private; output only decisions, artifacts, and justifications.
+### API Conventions
+- All routes under `/api/`
+- Return JSON responses
+- Use Pydantic models for request/response
+- Handle errors with HTTPException
 
-### Execution contract for every request
-1) Confirm surface and success criteria (one sentence).
-2) List constraints, invariants, non‑goals.
-3) Produce the artifact with acceptance checks inlined (checkboxes or tests where applicable).
-4) Add follow‑ups and risks (max 3 bullets).
-5) Create PHR in appropriate subdirectory under `history/prompts/` (constitution, feature-name, or general).
-6) If plan/tasks identified decisions that meet significance, surface ADR suggestion text as described above.
+### Database
+- Use SQLModel for all database operations
+- Connection string from environment variable: DATABASE_URL
 
-### Minimum acceptance criteria
-- Clear, testable acceptance criteria included
-- Explicit error paths and constraints stated
-- Smallest viable change; no unrelated edits
-- Code references to modified/inspected files where relevant
+### Running
+```
+uvicorn main:app --reload --port 8000
+```
 
-## Architect Guidelines (for planning)
+## How to Use Specs
+1. Always read relevant spec before implementing
+2. Reference specs with: @specs/features/task-crud.md
+3. Update specs if requirements change
 
-Instructions: As an expert architect, generate a detailed architectural plan for [Project Name]. Address each of the following thoroughly.
+## Project Structure
+- /frontend - Next.js 16 app
+- /backend - Python FastAPI server
 
-1. Scope and Dependencies:
-   - In Scope: boundaries and key features.
-   - Out of Scope: explicitly excluded items.
-   - External Dependencies: systems/services/teams and ownership.
+## Development Workflow
+1. Read spec: @specs/features/[feature].md
+2. Implement backend: @backend/CLAUDE.md
+3. Implement frontend: @frontend/CLAUDE.md
+4. Test and iterate
 
-2. Key Decisions and Rationale:
-   - Options Considered, Trade-offs, Rationale.
-   - Principles: measurable, reversible where possible, smallest viable change.
+## Commands
+- Frontend: cd frontend && npm run dev
+- Backend: cd backend && uvicorn main:app --reload
+- Both: docker-compose up
 
-3. Interfaces and API Contracts:
-   - Public APIs: Inputs, Outputs, Errors.
-   - Versioning Strategy.
-   - Idempotency, Timeouts, Retries.
-   - Error Taxonomy with status codes.
+## Base URL
+- Development: http://localhost:8000
+- Production: https://api.example.com
 
-4. Non-Functional Requirements (NFRs) and Budgets:
-   - Performance: p95 latency, throughput, resource caps.
-   - Reliability: SLOs, error budgets, degradation strategy.
-   - Security: AuthN/AuthZ, data handling, secrets, auditing.
-   - Cost: unit economics.
+## Authentication
+All endpoints require JWT token in header:
+Authorization: Bearer <token>
 
-5. Data Management and Migration:
-   - Source of Truth, Schema Evolution, Migration and Rollback, Data Retention.
+## Endpoints
 
-6. Operational Readiness:
-   - Observability: logs, metrics, traces.
-   - Alerting: thresholds and on-call owners.
-   - Runbooks for common tasks.
-   - Deployment and Rollback strategies.
-   - Feature Flags and compatibility.
+### GET /api/{user_id}/tasks
+List all tasks for authenticated user.
 
-7. Risk Analysis and Mitigation:
-   - Top 3 Risks, blast radius, kill switches/guardrails.
+Query Parameters:
+- status: "all" | "pending" | "completed"
+- sort: "created" | "title" | "due_date"
 
-8. Evaluation and Validation:
-   - Definition of Done (tests, scans).
-   - Output Validation for format/requirements/safety.
+Response: Array of Task objects
 
-9. Architectural Decision Record (ADR):
-   - For each significant decision, create an ADR and link it.
+### POST /api/{user_id}/tasks
+Create a new task.
 
-### Architecture Decision Records (ADR) - Intelligent Suggestion
+Request Body:
+- title: string (required)
+- description: string (optional)
 
-After design/architecture work, test for ADR significance:
+Response: Created Task object
 
-- Impact: long-term consequences? (e.g., framework, data model, API, security, platform)
-- Alternatives: multiple viable options considered?
-- Scope: cross‑cutting and influences system design?
+### GET /api/{user_id}/tasks/{id}
+Get task details.
 
-If ALL true, suggest:
-📋 Architectural decision detected: [brief-description]
-   Document reasoning and tradeoffs? Run `/sp.adr [decision-title]`
+Response: Task object
 
-Wait for consent; never auto-create ADRs. Group related decisions (stacks, authentication, deployment) into one ADR when appropriate.
+### PUT /api/{user_id}/tasks/{id}
+Update a task.
 
-## Basic Project Structure
+Request Body:
+- title: string (required)
+- description: string (optional)
 
-- `.specify/memory/constitution.md` — Project principles
-- `specs/<feature>/spec.md` — Feature requirements
-- `specs/<feature>/plan.md` — Architecture decisions
-- `specs/<feature>/tasks.md` — Testable tasks with cases
-- `history/prompts/` — Prompt History Records
-- `history/adr/` — Architecture Decision Records
-- `.specify/` — SpecKit Plus templates and scripts
+Response: Updated Task object
 
-## Code Standards
-See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+### DELETE /api/{user_id}/tasks/{id}
+Delete a task.
+
+Response: Success confirmation
+
+### PATCH /api/{user_id}/tasks/{id}/complete
+Toggle task completion.
+
+Response: Updated Task object
+
+## Database Schema
+
+### Tables
+
+#### users
+- `id`: integer (primary key, auto-increment)
+- `email`: string (unique, indexed)
+- `username`: string (not null)
+- `hashed_password`: string (not null, bcrypt hashed)
+- `is_active`: boolean (default true)
+- `created_at`: timestamp
+
+#### tasks
+- `id`: integer (primary key, auto-increment)
+- `user_id`: integer (foreign key → users.id, indexed)
+- `title`: string (not null, max 200 characters)
+- `description`: text (nullable, max 1000 characters)
+- `completed`: boolean (default false, indexed)
+- `created_at`: timestamp
+- `updated_at`: timestamp
+
+#### RefreshToken
+- `id`: integer (primary key)
+- `user_id`: integer (foreign key → users.id)
+- `token`: string (unique, indexed) - Cryptographically secure random token (secrets.token_urlsafe)
+- `expires_at`: timestamp (token expiration)
+- `revoked`: boolean (default false, whether token has been revoked)
+- `created_at`: timestamp
+
+### Indexes
+- `tasks.user_id` (for filtering by user)
+- `tasks.completed` (for status filtering)
+
+## Development Commands
+
+### Prerequisites
+- Node.js 18+ for frontend
+- Python 3.9+ for backend
+- PostgreSQL-compatible database (Neon Serverless recommended)
+- Docker (optional, for containerized deployment)
+
+### JWT Token Refresh Mechanism
+- Access tokens: 15 minutes (stored in-memory on frontend)
+- Refresh tokens: 7 days (HTTP-only cookie + stored in PostgreSQL RefreshToken table)
+- No token rotation (basic level functionality)
+- No blacklisting (keep it simple)
+- Token refresh endpoint: `POST /api/auth/refresh`
+
+### Security Audit Procedures
+- Dependency vulnerability scanning: `npm audit` and `pip-audit`
+- Static code analysis: ESLint, Pylint, Bandit
+
+### Testing with Playwright MCP
+
+The project includes Playwright MCP server for browser automation and testing:
+
+**Start Playwright MCP server:**
+```bash
+npx @playwright/mcp@latest --config playwright-mcp.config
+```
+
+**Or run directly with options:**
+```bash
+npx @playwright/mcp@latest --port 9322 --browser chromium --headless
+```
+
+The Playwright MCP server enables:
+- Browser automation for end-to-end testing
+- Visual testing capabilities
+- Integration testing of the full stack application
+- Automated UI interaction testing
+
+### Running Applications
+
+**Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+**Backend:**
+```bash
+cd backend
+uvicorn main:app --reload --port 8000
+```
+
+**Both (using Docker):**
+```bash
+docker-compose up
+```
+
+### Installation
+1. Set up environment variables:
+```bash
+cp .env.example .env
+# Configure your environment variables
+```
+
+2. Install frontend dependencies:
+```bash
+cd frontend
+npm install
+```
+
+3. Install backend dependencies:
+```bash
+cd ../backend
+pip install -r requirements.txt
+```
+
+## Workflow with Spec-KitPlus + Claude Code
+Write/Update Spec → @specs/features/new-feature.md
+Ask Claude Code to Implement → "Implement @specs/features/new-feature.md"
+Claude Code reads: Root CLAUDE.md, Feature spec, API spec, Database spec, Relevant CLAUDE.md
+Claude Code implements in both frontend and backend
+Test and iterate on spec if needed
+Referencing Specs in Claude Code
+
+## Security Considerations
+
+- HTTP-only cookies prevent XSS attacks
+- JWT token validation and expiration (HS256 with AUTH_SECRET environment variable)
+- User isolation through ID matching
+- Input validation and sanitization
+- SQL injection prevention through ORM
+- Secure password hashing
+- Secrets stored in environment variables only
+- Cookie SameSite: 'lax' (better compatibility with authentication flows)
+- The backend uses a single AUTH_SECRET for JWT signing and verification
+
+## Basic Risk Considerations
+
+### High Priority Risks
+- **JWT token security**: Use HS256 algorithm with AUTH_SECRET; no asymmetric encryption
+- **SQL injection prevention**: Always use SQLModel ORM queries; never construct raw SQL from user input
+- **Cookie security**: Ensure HttpOnly=true, Secure=true, SameSite='lax' in production
+
+### Medium Priority Risks
+- **Database connection pooling**: Basic connection management for development
+- **Race condition prevention**: Use database transactions with appropriate isolation levels for concurrent operations
+
+## Development Best Practices
+
+### Authentication Architecture
+1. User signs up or signs in via frontend form
+2. Backend validates credentials
+3. Backend creates JWT tokens (HS256 with AUTH_SECRET)
+4. Backend sets refresh token in HTTP-only cookie with HttpOnly=true, Secure=true, SameSite=Lax
+5. Frontend stores access token in-memory
+6. Backend validates JWT on every protected request
+7. Backend extracts user identity from validated JWT
+8. Backend enforces data access only for authenticated user
+
+### Basic Deployment Setup
+- Local development with hot reloading
+- Docker Compose for containerized local development
+- Environment-specific configuration via .env files
+- Simple production deployment
+
+### Basic Security Headers
+- Strict-Transport-Security for HTTPS enforcement
+- X-Content-Type-Options to prevent MIME-type sniffing
+- X-Frame-Options for clickjacking protection
+- Content-Security-Policy for XSS prevention
+
+### Strict Rules
+- Never trust user-supplied user IDs
+- Session cookie must be validated on every API request
+- Authentication logic must not leak into business logic
+- Secrets must come from environment variables only
+- Cookies must be HttpOnly and Secure in production
+- Expired or invalid sessions must immediately revoke access
+- All routes must be under `/api`
+- JWT required for every request
+- Filter all data by authenticated user ID
+- No frontend or UI logic in backend
+- No direct fetch outside API client
+- No backend logic in frontend
+- Schema changes must be documented in database specs first
+- Use Claude Code for all implementations (no manual coding)
+- Follow Agentic Dev Stack: Write spec → Generate plan → Break into tasks → Implement

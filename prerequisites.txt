@@ -1,0 +1,178 @@
+URGENT: Fix Critical Issues in CLAUDE.md and Readme.md
+
+You are Claude Code. Read the CLAUDE.md file and make EXACTLY these changes. Do NOT add anything else. Do NOT remove anything else. ONLY make these specific fixes.
+
+## CRITICAL FIX #1: SECRET_KEY Naming Convention
+
+CURRENT PROBLEM: The file uses both "AUTH_SECRET" and "SECRET_KEY" inconsistently.
+
+FIND AND REPLACE:
+1. Find: "This is typically set via environment variable AUTH_SECRET"
+   Replace with: "This is typically set via environment variable SECRET_KEY"
+
+2. Find: "HS256 with SECRET_KEY from AUTH_SECRET environment variable"
+   Replace with: "HS256 with SECRET_KEY environment variable"
+
+3. Search the ENTIRE file for ANY remaining instances of "AUTH_SECRET" and replace with "SECRET_KEY"
+
+VERIFY: After changes, search for "AUTH_SECRET" - it should NOT appear anywhere in the file.
+
+## CRITICAL FIX #2: RefreshToken Schema
+
+CURRENT PROBLEM: Schema shows token_hash (hashed), but refresh tokens should be stored as plain secure random strings.
+
+FIND this section:
+```
+#### RefreshToken
+- `id`: integer (primary key)
+- `user_id`: string (foreign key → users.id)
+- `token_hash`: string (hashed refresh token)
+- `expires_at`: timestamp (token expiration)
+- `revoked`: boolean (whether token has been revoked)
+- `created_at`: timestamp
+```
+
+REPLACE WITH:
+```
+#### RefreshToken
+- `id`: integer (primary key)
+- `user_id`: integer (foreign key → users.id)
+- `token`: string (unique, indexed) - Cryptographically secure random token (secrets.token_urlsafe)
+- `expires_at`: timestamp (token expiration)
+- `revoked`: boolean (default false, whether token has been revoked)
+- `created_at`: timestamp
+```
+
+KEY CHANGES:
+- `token_hash` → `token`
+- Remove "(hashed refresh token)"
+- Add "(unique, indexed)" and explanation
+- Fix user_id type from string to integer (see next fix)
+
+## CRITICAL FIX #3: User ID Data Type Consistency
+
+CURRENT PROBLEM: users.id is "string" but tasks.id is "integer" - this is inconsistent.
+
+FIND this section:
+```
+#### users
+- `id`: string (primary key)
+- `email`: string (unique)
+- `name`: string
+- `created_at`: timestamp
+```
+
+REPLACE WITH:
+```
+#### users
+- `id`: integer (primary key, auto-increment)
+- `email`: string (unique, indexed)
+- `username`: string (not null)
+- `hashed_password`: string (not null, bcrypt hashed)
+- `is_active`: boolean (default true)
+- `created_at`: timestamp
+```
+
+ALSO FIND this section:
+```
+#### tasks
+- `id`: integer (primary key)
+- `user_id`: string (foreign key → users.id)
+- `title`: string (not null)
+- `description`: text (nullable)
+- `completed`: boolean (default false)
+- `created_at`: timestamp
+- `updated_at`: timestamp
+```
+
+REPLACE WITH:
+```
+#### tasks
+- `id`: integer (primary key, auto-increment)
+- `user_id`: integer (foreign key → users.id, indexed)
+- `title`: string (not null, max 200 characters)
+- `description`: text (nullable, max 1000 characters)
+- `completed`: boolean (default false, indexed)
+- `created_at`: timestamp
+- `updated_at`: timestamp
+```
+
+KEY CHANGES:
+- users.id: string → integer (auto-increment)
+- tasks.user_id: string → integer
+- Added missing user fields (username, hashed_password, is_active)
+- Added field constraints for clarity
+
+## MEDIUM FIX #4: Add Prominent "No Manual Coding" Section
+
+CURRENT PROBLEM: This critical constraint is buried at the bottom. It should be near the top.
+
+FIND this section (it's near the beginning):
+```
+## Project Overview
+This is a monorepo using GitHub Spec-Kit for spec-driven development.
+```
+
+IMMEDIATELY AFTER "## Project Overview", ADD this new section:
+```
+## 🤖 CRITICAL: No Manual Coding Allowed
+
+**⚠️ THIS IS A JUDGING REQUIREMENT ⚠️**
+
+This entire project MUST be built using Claude Code with ZERO manual coding:
+
+### What This Means
+- ✅ All code generated via Claude Code prompts
+- ✅ All implementations driven by specifications in `/specs/`
+- ✅ Process, prompts, and iterations will be judged
+- ❌ No manual editing of generated code
+- ❌ No copying code from external sources
+- ❌ No direct file editing outside Claude Code
+
+### Agentic Dev Stack Workflow
+```
+1. Write Spec        → Create/update file in /specs/features/
+2. Prompt Claude     → "Implement @specs/features/[feature].md"
+3. Claude Reads      → Specs + CLAUDE.md files
+4. Claude Generates  → Complete implementation
+5. Test              → Verify functionality
+6. Iterate           → Update spec if needed, regenerate
+```
+
+### Example Prompt Pattern
+```
+"Implement user authentication as specified in @specs/features/authentication.md
+Follow patterns in @backend/CLAUDE.md
+Use SQLModel and FastAPI
+Include HTTP-only cookies and JWT tokens"
+```
+
+**This development approach is a core evaluation criteria for the hackathon.**
+```
+
+## VERIFICATION STEPS
+
+After making ALL changes above, verify:
+
+1. Search entire file for "AUTH_SECRET" → Should be ZERO matches
+2. Search for "SECRET_KEY" → Should appear in multiple places
+3. Search for "token_hash" → Should be ZERO matches
+4. Search for "user_id`: string" → Should be ZERO matches
+5. Search for "user_id`: integer" → Should appear in RefreshToken and tasks
+6. Verify "## 🤖 CRITICAL: No Manual Coding Allowed" appears BEFORE "## Spec-Kit Structure"
+
+## FINAL OUTPUT
+
+After completing these changes:
+1. Show me the diff of what changed
+2. Confirm all verification steps passed
+3. List any potential issues you found
+
+DO NOT:
+- Add any other sections
+- Remove any existing content (except what's being replaced)
+- Change any other formatting
+- Modify the "Strict Rules" section
+- Add comments or explanations in the file itself
+
+EXECUTE THESE CHANGES NOW.

@@ -1,0 +1,25 @@
+ambiguities
+P+Q+P (Persona, Questions, Principles)
+Web Content Accessibility Guidelines(WCAG)
+Architechture Design Record
+Prompt History Record
+First Input Delay (FID)
+Largest Contentful Paint(LCP)
+Cumulative Layout Shift (CLS)
+Read-Eval-Print Loop(REPL)
+Cascade Effect
+APA format (American Psychological Association)
+Developer Experience (DX)
+checkpoint pattern
+Context friction
+alembic(Database migration tool)
+Greenfield ____ new codebases where you start from scratch and control the entire structure.
+Brownfield Adoption ____It is the process of bringing Spec-Kit Plus into an existing project.
+Monolith = everything (UI + backend + business logic + database logic) is inside one big application
+MicroServices
+React Day picker
+Entity Relationship Diagram
+flake8
+WSGI/ASGI
+TLS/SSL
+Cross-Site Request Forgery
