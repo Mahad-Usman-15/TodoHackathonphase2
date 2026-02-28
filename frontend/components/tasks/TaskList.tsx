@@ -2,6 +2,7 @@
 
 import type { Task } from "@/types";
 import TaskItem from "./TaskItem";
+import EmptyState from "@/components/dashboard/EmptyState";
 
 interface TaskListProps {
   tasks: Task[];
@@ -19,17 +20,11 @@ export default function TaskList({
   onDelete,
 }: TaskListProps) {
   if (tasks.length === 0) {
-    return (
-      <div className="rounded-lg border border-dashed border-gray-300 bg-white p-12 text-center">
-        <p className="text-sm text-gray-500">
-          No tasks yet. Create your first task above.
-        </p>
-      </div>
-    );
+    return <EmptyState />;
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {tasks.map((task) => (
         <TaskItem
           key={task.id}

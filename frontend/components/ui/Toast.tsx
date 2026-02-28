@@ -12,24 +12,23 @@ export default function Toast({ message, type, onDismiss }: ToastProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onDismiss();
-    }, 3000);
+    }, 4000);
     return () => clearTimeout(timer);
   }, [onDismiss]);
 
-  const bgClass =
-    type === "error"
-      ? "bg-red-600 text-white"
-      : "bg-green-600 text-white";
-
   return (
     <div
-      className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-lg px-4 py-3 shadow-lg ${bgClass}`}
+      className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl px-4 py-3 shadow-xl shadow-brand-bg/50 backdrop-blur-sm bg-brand-deep/95 border border-brand-primary/30 ${
+        type === "error"
+          ? "border-l-4 border-l-brand-cta"
+          : "border-l-4 border-l-green-500/70"
+      }`}
       role="alert"
     >
-      <span className="text-sm font-medium">{message}</span>
+      <span className="font-body text-sm text-white">{message}</span>
       <button
         onClick={onDismiss}
-        className="ml-2 rounded p-0.5 hover:opacity-80 transition-opacity"
+        className="ml-2 rounded p-0.5 text-white/40 hover:text-white transition-colors"
         aria-label="Dismiss"
       >
         <svg

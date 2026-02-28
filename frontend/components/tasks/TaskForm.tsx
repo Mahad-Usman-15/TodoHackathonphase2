@@ -40,18 +40,18 @@ export default function TaskForm({ userId, onTaskCreated, onError }: TaskFormPro
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-lg bg-white border border-gray-200 p-6 shadow-sm"
+      className="bg-brand-deep/10 border border-brand-primary/20 rounded-xl p-6"
     >
-      <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
+      <h2 className="font-accent text-brand-primary text-xs uppercase tracking-widest mb-4">
         New Task
-      </h3>
+      </h2>
       <div className="space-y-3">
         <div>
           <label
             htmlFor="task-title"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block font-body text-sm text-white/70 mb-1"
           >
-            Title <span className="text-red-500">*</span>
+            Title <span className="text-brand-cta">*</span>
           </label>
           <input
             id="task-title"
@@ -62,13 +62,13 @@ export default function TaskForm({ userId, onTaskCreated, onError }: TaskFormPro
             required
             disabled={isSubmitting}
             placeholder="What needs to be done?"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500"
+            className="w-full rounded-lg bg-brand-bg border border-brand-primary/30 px-3 py-2 font-body text-sm text-white placeholder-white/30 focus:outline-none focus:border-brand-cta focus:ring-1 focus:ring-brand-cta disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
           />
         </div>
         <div>
           <label
             htmlFor="task-description"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block font-body text-sm text-white/70 mb-1"
           >
             Description
           </label>
@@ -80,14 +80,14 @@ export default function TaskForm({ userId, onTaskCreated, onError }: TaskFormPro
             rows={3}
             disabled={isSubmitting}
             placeholder="Add more details (optional)"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 resize-none"
+            className="w-full rounded-lg bg-brand-bg border border-brand-primary/30 px-3 py-2 font-body text-sm text-white placeholder-white/30 focus:outline-none focus:border-brand-cta focus:ring-1 focus:ring-brand-cta disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-colors"
           />
         </div>
         <div className="flex justify-end">
           <button
             type="submit"
             disabled={isSubmitting || !title.trim()}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+            className="font-heading font-semibold text-sm bg-brand-cta hover:bg-brand-cta-hover text-white rounded-lg px-6 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {isSubmitting ? "Adding..." : "Add Task"}
           </button>

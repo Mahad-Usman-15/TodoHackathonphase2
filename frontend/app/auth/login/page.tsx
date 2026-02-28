@@ -1,39 +1,35 @@
-"use client";
-
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/auth_context";
+import type { Metadata } from "next";
 import { LoginForm } from "@/components/auth/login-form";
+import FadeIn from "@/components/ui/FadeIn";
+
+export const metadata: Metadata = {
+  title: "Sign In",
+  description: "Sign in to your Taskify account and manage your tasks.",
+  alternates: {
+    canonical: "/auth/login",
+  },
+  openGraph: {
+    title: "Sign In | Taskify",
+    url: "/auth/login",
+  },
+};
 
 export default function LoginPage() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      router.replace("/dashboard");
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-      </div>
-    );
-  }
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="rounded-lg bg-white px-8 py-10 shadow-sm border border-gray-200">
-          <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-            <p className="mt-2 text-sm text-gray-600">Sign in to your account</p>
-          </div>
-          <LoginForm />
+    <div className="min-h-screen bg-gradient-to-br from-brand-deep to-brand-bg flex items-center justify-center px-4 py-12">
+      <FadeIn immediate delay={0.1} className="w-full max-w-md">
+      <div className="bg-brand-deep/10 backdrop-blur-md border border-brand-primary/20 rounded-2xl px-8 py-10 shadow-2xl shadow-brand-bg/50">
+        <div className="mb-8 text-center">
+          <h1 className="font-heading font-bold text-2xl text-white mb-2">
+            Welcome back
+          </h1>
+          <p className="font-body text-sm text-white/60">
+            Sign in to your account
+          </p>
         </div>
+        <LoginForm />
       </div>
+      </FadeIn>
     </div>
   );
 }

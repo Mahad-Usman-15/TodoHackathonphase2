@@ -670,3 +670,114 @@ High-Level System Architecture Diagram
 
   This architecture ensures that the system remains fully functional at every development stage while maintaining security, performance, and maintainability throughout
   the hackathon timeline.
+
+
+
+
+
+
+
+Spec Title:Frontend-revamp and SEO update
+
+Now the UI improvement phase.Currenlty the UI of the website is very simple .I want to create a dark themed website.
+Color pallete 
+
+Header sleek ui with a user avatar
+Home page with a beutiful hero section
+Animations using framer motion(hover)
+text animations using gsap
+Text marquee
+animated cards
+cta banner
+Fonts to use
+
+use shadows on hover for cards
+Improve Forms (Very Important)
+Instead of plain inputs:
+Dark input background
+Focus ring glow
+Smooth border transition
+Placeholder lighter than text
+Improve Dashboard Layout Structure
+Add:
+Left sidebar (collapsible)
+Centered content container (max-w-5xl)
+Sticky header
+Soft card shadows
+Pages
+about
+privacy policy
+
+Card-based tasks
+Completion strike-through animation
+Hover elevation
+Subtle border glow
+✨ Add Micro-interactions
+Hover scale: hover:scale-[1.01]
+Smooth transitions: transition-all duration-200
+Checkbox animation
+Button ripple effect
+Add Loading States
+
+Current hackathon apps usually miss this.
+
+Add:
+Skeleton loader
+Button loading spinner
+Disabled state styling
+
+Dark theme feels premium with glow accents.
+
+Example:
+Primary button → subtle glow
+Active nav → gradient underline
+Completed task → muted + green dot
+
+Add Stats Section (Makes It Feel Real)
+
+Above task list:
+
+Total Tasks
+Completed
+Pending
+Completion %
+
+In small cards with icons.
+
+Improve Empty State
+
+If no tasks:
+
+Instead of blank screen:
+Add:
+Icon
+Short message
+Call to action button
+Example:
+
+“✨ You’re all set. Create your first task.”
+
+Add Motion (Subtle, Not Overkill)
+
+Use Framer Motion:
+
+Animate task entry
+
+Fade in dashboard
+
+Slide sidebar
+
+Small motion = premium feel.
+
+SEO
+metadata description
+sitemap
+robots
+
+
+
+
+What can be done to improve the ui of the current website. in a dark theme
+
+
+

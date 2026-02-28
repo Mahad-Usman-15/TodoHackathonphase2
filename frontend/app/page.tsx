@@ -1,26 +1,47 @@
-"use client";
+import type { Metadata } from "next";
+import LandingNav from "@/components/landing/LandingNav";
+import HeroSection from "@/components/landing/HeroSection";
+import FeaturesGrid from "@/components/landing/FeaturesGrid";
+import HowItWorks from "@/components/landing/HowItWorks";
+import SecuritySection from "@/components/landing/SecuritySection";
+import FaqAccordion from "@/components/landing/FaqAccordion";
+import LandingFooter from "@/components/landing/LandingFooter";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/auth_context";
+export const metadata: Metadata = {
+  title: {
+    absolute: "Taskify — Smart Task Manager",
+  },
+  description:
+    "Taskify helps you manage tasks securely with JWT authentication and a clean, fast interface. Free forever.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Taskify — Smart Task Manager",
+    description:
+      "Taskify helps you manage tasks securely with JWT authentication and a clean, fast interface. Free forever.",
+    url: "/",
+    siteName: "Taskify",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Taskify — Smart Task Manager",
+    description:
+      "Taskify helps you manage tasks securely with JWT authentication and a clean, fast interface. Free forever.",
+  },
+};
 
 export default function Home() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (isAuthenticated) {
-        router.replace("/dashboard");
-      } else {
-        router.replace("/auth/login");
-      }
-    }
-  }, [isAuthenticated, isLoading, router]);
-
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-    </div>
+    <main className="bg-brand-bg min-h-screen">
+      <LandingNav />
+      <HeroSection />
+      <FeaturesGrid />
+      <HowItWorks />
+      <SecuritySection />
+      <FaqAccordion />
+      <LandingFooter />
+    </main>
   );
 }

@@ -15,16 +15,16 @@ export default function DeleteConfirmDialog({
 }: DeleteConfirmDialogProps) {
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-brand-bg/80 backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}
     >
-      <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
-        <h2 className="mb-2 text-base font-semibold text-gray-900">
+      <div className="w-full max-w-sm bg-brand-deep/20 border border-brand-primary/30 rounded-2xl p-6 backdrop-blur-md shadow-2xl shadow-brand-bg/50">
+        <h2 className="font-heading font-semibold text-white text-base mb-2">
           Delete Task
         </h2>
-        <p className="mb-6 text-sm text-gray-600">
+        <p className="font-body text-sm text-white/70 mb-6">
           Are you sure you want to delete &quot;{taskTitle}&quot;? This cannot
           be undone.
         </p>
@@ -33,7 +33,7 @@ export default function DeleteConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={isDeleting}
-            className="rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+            className="font-body text-sm text-white/60 hover:text-white border border-brand-primary/30 hover:border-brand-primary/60 rounded-lg px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
           >
             Cancel
           </button>
@@ -41,7 +41,7 @@ export default function DeleteConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={isDeleting}
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+            className="font-heading font-semibold text-sm bg-brand-cta hover:bg-brand-cta-hover text-white rounded-lg px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
           >
             {isDeleting ? "Deleting..." : "Delete"}
           </button>

@@ -10,6 +10,9 @@ import TaskList from "@/components/tasks/TaskList";
 import EditTaskModal from "@/components/tasks/EditTaskModal";
 import DeleteConfirmDialog from "@/components/tasks/DeleteConfirmDialog";
 import Toast from "@/components/ui/Toast";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import StatsBar from "@/components/dashboard/StatsBar";
+import SkeletonCard from "@/components/dashboard/SkeletonCard";
 
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
@@ -122,8 +125,8 @@ export default function DashboardPage() {
   // Loading state (auth resolving)
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+      <div className="min-h-screen bg-brand-bg flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-cta border-t-transparent" />
       </div>
     );
   }
@@ -133,52 +136,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Todo App</h1>
-          <button
-            onClick={logout}
-            className="rounded-md px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-          >
-            Sign out
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-brand-bg">
+      <DashboardHeader username={user.username} onLogout={logout} />
 
-      <main className="mx-auto max-w-4xl px-4 py-10">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Welcome back, {user.username}!
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            You are successfully authenticated.
-          </p>
-        </div>
-
-        <div className="rounded-lg bg-white border border-gray-200 p-6 shadow-sm mb-6">
-          <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
-            Account Details
-          </h3>
-          <dl className="space-y-3">
-            <div className="flex items-center gap-4">
-              <dt className="w-24 text-sm font-medium text-gray-500">
-                Username
-              </dt>
-              <dd className="text-sm text-gray-900">{user.username}</dd>
-            </div>
-            <div className="flex items-center gap-4">
-              <dt className="w-24 text-sm font-medium text-gray-500">Email</dt>
-              <dd className="text-sm text-gray-900">{user.email}</dd>
-            </div>
-            <div className="flex items-center gap-4">
-              <dt className="w-24 text-sm font-medium text-gray-500">
-                User ID
-              </dt>
-              <dd className="text-sm text-gray-900">#{user.id}</dd>
-            </div>
-          </dl>
-        </div>
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <StatsBar tasks={tasks} />
 
         {/* Task creation form */}
         <div className="mb-4">
@@ -192,8 +154,10 @@ export default function DashboardPage() {
         {/* Task list */}
         <div className="mt-4">
           {isLoadingTasks ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+            <div className="space-y-3">
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
             </div>
           ) : (
             <TaskList

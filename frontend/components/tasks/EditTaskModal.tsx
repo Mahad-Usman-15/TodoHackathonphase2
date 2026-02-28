@@ -51,20 +51,22 @@ export default function EditTaskModal({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-brand-bg/80 backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <h2 className="mb-4 text-base font-semibold text-gray-900">Edit Task</h2>
+      <div className="w-full max-w-md bg-brand-deep/20 border border-brand-primary/30 rounded-2xl p-6 backdrop-blur-md shadow-2xl shadow-brand-bg/50">
+        <h2 className="font-heading font-semibold text-white text-base mb-4">
+          Edit Task
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label
               htmlFor="edit-task-title"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block font-body text-sm text-white/70 mb-1"
             >
-              Title <span className="text-red-500">*</span>
+              Title <span className="text-brand-cta">*</span>
             </label>
             <input
               id="edit-task-title"
@@ -74,13 +76,13 @@ export default function EditTaskModal({
               maxLength={200}
               required
               disabled={isSaving}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500"
+              className="w-full rounded-lg bg-brand-bg border border-brand-primary/30 px-3 py-2 font-body text-sm text-white placeholder-white/30 focus:outline-none focus:border-brand-cta focus:ring-1 focus:ring-brand-cta disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
             />
           </div>
           <div>
             <label
               htmlFor="edit-task-description"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block font-body text-sm text-white/70 mb-1"
             >
               Description
             </label>
@@ -91,12 +93,12 @@ export default function EditTaskModal({
               maxLength={1000}
               rows={3}
               disabled={isSaving}
-              className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500"
+              className="w-full resize-none rounded-lg bg-brand-bg border border-brand-primary/30 px-3 py-2 font-body text-sm text-white placeholder-white/30 focus:outline-none focus:border-brand-cta focus:ring-1 focus:ring-brand-cta disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-600">{error}</p>
+            <p className="font-body text-sm text-brand-cta/80">{error}</p>
           )}
 
           <div className="flex justify-end gap-2 pt-1">
@@ -104,14 +106,14 @@ export default function EditTaskModal({
               type="button"
               onClick={onClose}
               disabled={isSaving}
-              className="rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+              className="font-body text-sm text-white/60 hover:text-white border border-brand-primary/30 hover:border-brand-primary/60 rounded-lg px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving || !title.trim()}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+              className="font-heading font-semibold text-sm bg-brand-cta hover:bg-brand-cta-hover text-white rounded-lg px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
             >
               {isSaving ? "Saving..." : "Save"}
             </button>

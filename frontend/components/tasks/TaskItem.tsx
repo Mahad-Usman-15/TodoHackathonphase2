@@ -21,10 +21,10 @@ function formatDate(dateStr: string): string {
 export default function TaskItem({ task, onEdit, onToggle, onDelete }: TaskItemProps) {
   return (
     <div
-      className={`rounded-lg border p-4 transition-colors ${
+      className={`rounded-xl border p-4 transition-all duration-200 ${
         task.completed
-          ? "border-gray-100 bg-gray-50"
-          : "border-gray-200 bg-white"
+          ? "opacity-50 border-brand-primary/10 bg-brand-deep/10 hover:opacity-60"
+          : "border-brand-primary/20 bg-brand-deep/10 hover:border-brand-primary/50 hover:shadow-lg hover:shadow-brand-deep/20 hover:-translate-y-0.5"
       }`}
     >
       <div className="flex items-start gap-3">
@@ -32,10 +32,10 @@ export default function TaskItem({ task, onEdit, onToggle, onDelete }: TaskItemP
         <button
           onClick={() => onToggle(task)}
           aria-label={task.completed ? "Mark as incomplete" : "Mark as complete"}
-          className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+          className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border-2 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand-cta focus:ring-offset-1 focus:ring-offset-brand-bg active:scale-90 ${
             task.completed
-              ? "border-green-500 bg-green-500 text-white"
-              : "border-gray-300 bg-white hover:border-blue-400"
+              ? "border-brand-cta bg-brand-cta text-white"
+              : "border-brand-primary/40 bg-transparent hover:border-brand-cta"
           }`}
         >
           {task.completed && (
@@ -57,24 +57,20 @@ export default function TaskItem({ task, onEdit, onToggle, onDelete }: TaskItemP
         {/* Task content */}
         <div className="min-w-0 flex-1">
           <p
-            className={`text-sm font-medium leading-snug ${
+            className={`text-sm font-medium leading-snug font-body ${
               task.completed
-                ? "text-gray-400 line-through"
-                : "text-gray-900"
+                ? "text-white/40 line-through"
+                : "text-white"
             }`}
           >
             {task.title}
           </p>
           {task.description && (
-            <p
-              className={`mt-1 text-sm ${
-                task.completed ? "text-gray-300" : "text-gray-500"
-              }`}
-            >
+            <p className="mt-1 text-sm font-body text-white/60">
               {task.description}
             </p>
           )}
-          <p className="mt-1.5 text-xs text-gray-400">
+          <p className="mt-1.5 text-xs font-accent text-white/30">
             Created {formatDate(task.created_at)}
           </p>
         </div>
@@ -84,14 +80,14 @@ export default function TaskItem({ task, onEdit, onToggle, onDelete }: TaskItemP
           <button
             onClick={() => onEdit(task)}
             aria-label="Edit task"
-            className="rounded-md px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+            className="rounded-md px-2.5 py-1.5 text-xs font-body text-white/50 hover:text-white hover:bg-brand-primary/10 focus:outline-none focus:ring-2 focus:ring-brand-cta focus:ring-offset-1 focus:ring-offset-brand-bg transition-colors"
           >
             Edit
           </button>
           <button
             onClick={() => onDelete(task)}
             aria-label="Delete task"
-            className="rounded-md px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors"
+            className="rounded-md px-2.5 py-1.5 text-xs font-body text-brand-cta/60 hover:text-brand-cta hover:bg-brand-cta/10 focus:outline-none focus:ring-2 focus:ring-brand-cta focus:ring-offset-1 focus:ring-offset-brand-bg transition-colors"
           >
             Delete
           </button>
