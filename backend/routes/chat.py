@@ -82,7 +82,7 @@ async def chat(
             full_response = ""
 
             async with MCPServerStdio(
-                params={"command": "python", "args": [_MCP_SERVER_PATH]},
+                params={"command": "python", "args": [_MCP_SERVER_PATH], "env": os.environ.copy()},
                 cache_tools_list=True,
                 client_session_timeout_seconds=30.0,
             ) as mcp:
