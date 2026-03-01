@@ -18,6 +18,8 @@ async def lifespan(app: FastAPI):
     # Import all models so SQLModel creates tables
     from models.user import User
     from models.task import Task
+    from models.conversation import Conversation
+    from models.message import Message
     SQLModel.metadata.create_all(engine)
     yield
 
@@ -48,6 +50,9 @@ app.include_router(auth_router, prefix="/api", tags=["auth"])
 
 from routes.tasks import router as tasks_router
 app.include_router(tasks_router, prefix="/api", tags=["tasks"])
+
+from routes.chat import router as chat_router
+app.include_router(chat_router, prefix="/api", tags=["chat"])
 
 
 if __name__ == "__main__":

@@ -1,0 +1,298 @@
+openapi: "3.0.3"
+info:
+  title: Taskify Chat API — Phase III
+  version: "1.0.0"
+  description: AI chatbot endpoint for managing tasks via natural language
+
+servers:
+  - url: https://todo-hackathon-backend-17q8.onrender.com
+    description: Production
+  - url: http://localhost:8000
+    description: Local development
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Send message and receive AI response (SSE stream)
+      description: |
+        Stateless chat endpoint. Loads conversation history from DB, runs the
+        AI agent with MCP tools, stores result in DB, streams response via SSE.
+        Requires valid JWT access token in Authorization header.
+      operationId: sendChatMessage
+      tags: [Chat]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Authenticated user's integer ID (must match JWT subject)
+          schema:
+            type: integer
+            example: 42
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            examples:
+              new_conversation:
+                summary: Start a new conversation
+                value:
+                  message: "Add a task to buy groceries"
+              existing_conversation:
+                summary: Continue existing conversation
+                value:
+                  conversation_id: 7
+                  message: "What's still pending?"
+      responses:
+        "200":
+          description: |
+            SSE stream of response events. Content-Type: text/event-stream.
+            Final event contains full response + tool_calls array.
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/ChatSSEStream'
+              examples:
+                streaming_response:
+                  summary: Stream of events
+                  value: |
+                    data: {"delta": "I've ", "type": "text"}
+
+                    data: {"delta": "added the task!", "type": "text"}
+
+                    data: {"conversation_id": 7, "response": "I've added the task 'Buy groceries' to your list!", "tool_calls": [{"tool": "add_task", "args": {"user_id": "42", "title": "Buy groceries"}, "result": {"task_id": 15, "status": "created", "title": "Buy groceries"}}], "type": "done"}
+
+        "401":
+          description: Invalid or missing JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Not authenticated"
+        "403":
+          description: user_id in URL does not match JWT subject
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Access forbidden"
+        "422":
+          description: Validation error (message missing, invalid types)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "503":
+          description: AI service (Groq) unavailable
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/ChatErrorEvent'
+              example: |
+                data: {"error": "I'm having trouble responding right now. Please try again in a moment.", "type": "error"}
+
+  /api/{user_id}/conversations/latest:
+    get:
+      summary: Get the most recent conversation for a user
+      description: |
+        Returns the latest conversation_id so the frontend can load history.
+        Returns null if user has no conversations yet.
+      operationId: getLatestConversation
+      tags: [Chat]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Latest conversation info (or null)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+              examples:
+                has_conversation:
+                  value:
+                    conversation_id: 7
+                    title: null
+                    created_at: "2026-02-28T10:30:00Z"
+                no_conversation:
+                  value:
+                    conversation_id: null
+        "401":
+          description: Unauthorized
+
+  /api/{user_id}/conversations/{conversation_id}/messages:
+    get:
+      summary: Get message history for a conversation
+      description: Returns the last 20 messages for a conversation, ordered oldest first.
+      operationId: getConversationMessages
+      tags: [Chat]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of messages (oldest first)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MessageRead'
+              example:
+                - id: 1
+                  role: "user"
+                  content: "Add a task to buy groceries"
+                  created_at: "2026-02-28T10:30:00Z"
+                - id: 2
+                  role: "assistant"
+                  content: "I've added 'Buy groceries' to your task list!"
+                  created_at: "2026-02-28T10:30:03Z"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Conversation not found or does not belong to user
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        conversation_id:
+          type: integer
+          nullable: true
+          description: Existing conversation ID. Omit or null to start a new conversation.
+          example: 7
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: User's natural language message
+          example: "Add a task to buy groceries"
+
+    ChatSSEStream:
+      description: |
+        Server-Sent Events stream. Each event is a JSON object on a `data:` line.
+        Event types:
+        - "text": incremental response text delta
+        - "done": final event with full response + tool_calls + conversation_id
+        - "error": AI service failure message
+      type: object
+      oneOf:
+        - $ref: '#/components/schemas/ChatTextEvent'
+        - $ref: '#/components/schemas/ChatDoneEvent'
+        - $ref: '#/components/schemas/ChatErrorEvent'
+
+    ChatTextEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [text]
+        delta:
+          type: string
+          description: Incremental text chunk
+
+    ChatDoneEvent:
+      type: object
+      required: [type, conversation_id, response, tool_calls]
+      properties:
+        type:
+          type: string
+          enum: [done]
+        conversation_id:
+          type: integer
+          description: The conversation ID (new or existing)
+        response:
+          type: string
+          description: Full assembled assistant response text
+        tool_calls:
+          type: array
+          description: List of MCP tools invoked during this turn
+          items:
+            $ref: '#/components/schemas/ToolCallRecord'
+
+    ChatErrorEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [error]
+        error:
+          type: string
+          description: User-friendly error message
+
+    ToolCallRecord:
+      type: object
+      properties:
+        tool:
+          type: string
+          enum: [add_task, list_tasks, complete_task, delete_task, update_task]
+        args:
+          type: object
+          description: Arguments passed to the tool
+        result:
+          type: object
+          description: Tool return value
+
+    ConversationResponse:
+      type: object
+      properties:
+        conversation_id:
+          type: integer
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    MessageRead:
+      type: object
+      properties:
+        id:
+          type: integer
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string

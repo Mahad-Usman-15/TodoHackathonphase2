@@ -1,0 +1,212 @@
+# MCP Tools Contract — 004 AI Chatbot
+# These are the 5 tool definitions for the MCP server (mcp_server.py)
+# The AI agent calls these tools to interact with the task database.
+
+tools:
+  - name: add_task
+    description: >
+      Create a new task for the user. Call this when the user says they want to
+      add, create, or remember something. Always confirm the created task title.
+    parameters:
+      required: [user_id, title]
+      properties:
+        user_id:
+          type: string
+          description: Authenticated user's integer ID as string
+          example: "42"
+        title:
+          type: string
+          description: Task title (max 200 chars)
+          example: "Buy groceries"
+        description:
+          type: string
+          description: Optional task description (max 1000 chars)
+          example: "Milk, eggs, bread"
+    returns:
+      type: object
+      properties:
+        task_id: {type: integer}
+        status: {type: string, enum: [created]}
+        title: {type: string}
+    example_input:
+      user_id: "42"
+      title: "Buy groceries"
+      description: "Milk, eggs, bread"
+    example_output:
+      task_id: 15
+      status: "created"
+      title: "Buy groceries"
+    error_cases:
+      - condition: user_id does not match authenticated user
+        response: raises ValueError "Unauthorized user_id"
+      - condition: title is empty
+        response: raises ValueError "Title is required"
+
+  - name: list_tasks
+    description: >
+      Retrieve tasks from the user's list. Call this when the user asks to see,
+      show, or list their tasks. Use status filter when user asks for
+      "pending", "completed", or "all" tasks. Default to "all" if unspecified.
+    parameters:
+      required: [user_id]
+      properties:
+        user_id:
+          type: string
+          description: Authenticated user's integer ID as string
+        status:
+          type: string
+          enum: [all, pending, completed]
+          default: all
+          description: Filter tasks by completion status
+    returns:
+      type: array
+      items:
+        type: object
+        properties:
+          id: {type: integer}
+          title: {type: string}
+          description: {type: string, nullable: true}
+          completed: {type: boolean}
+    example_input:
+      user_id: "42"
+      status: "pending"
+    example_output:
+      - id: 15
+        title: "Buy groceries"
+        description: "Milk, eggs, bread"
+        completed: false
+      - id: 16
+        title: "Call mom"
+        description: null
+        completed: false
+    error_cases:
+      - condition: user_id mismatch
+        response: raises ValueError "Unauthorized user_id"
+
+  - name: complete_task
+    description: >
+      Mark a task as completed. Call this when the user says a task is done,
+      finished, or complete. Use the task ID from list_tasks if the user
+      referenced by name. Always confirm the completed task title.
+    parameters:
+      required: [user_id, task_id]
+      properties:
+        user_id:
+          type: string
+          description: Authenticated user's integer ID as string
+        task_id:
+          type: integer
+          description: ID of the task to mark complete
+    returns:
+      type: object
+      properties:
+        task_id: {type: integer}
+        status: {type: string, enum: [completed]}
+        title: {type: string}
+    example_input:
+      user_id: "42"
+      task_id: 15
+    example_output:
+      task_id: 15
+      status: "completed"
+      title: "Buy groceries"
+    error_cases:
+      - condition: task not found or belongs to different user
+        response: raises ValueError "Task 15 not found"
+
+  - name: delete_task
+    description: >
+      Remove a task from the user's list permanently. Call this when the user
+      says delete, remove, or cancel a task. If user references by name (not ID),
+      call list_tasks first to find the correct task_id. Always confirm deletion.
+    parameters:
+      required: [user_id, task_id]
+      properties:
+        user_id:
+          type: string
+          description: Authenticated user's integer ID as string
+        task_id:
+          type: integer
+          description: ID of the task to delete
+    returns:
+      type: object
+      properties:
+        task_id: {type: integer}
+        status: {type: string, enum: [deleted]}
+        title: {type: string}
+    example_input:
+      user_id: "42"
+      task_id: 15
+    example_output:
+      task_id: 15
+      status: "deleted"
+      title: "Buy groceries"
+    error_cases:
+      - condition: task not found or belongs to different user
+        response: raises ValueError "Task 15 not found"
+
+  - name: update_task
+    description: >
+      Modify a task's title or description. Call this when the user says change,
+      update, rename, or edit a task. At least one of title or description must
+      be provided. Always confirm the updated title.
+    parameters:
+      required: [user_id, task_id]
+      properties:
+        user_id:
+          type: string
+          description: Authenticated user's integer ID as string
+        task_id:
+          type: integer
+          description: ID of the task to update
+        title:
+          type: string
+          description: New title (optional, max 200 chars)
+        description:
+          type: string
+          description: New description (optional, max 1000 chars)
+    returns:
+      type: object
+      properties:
+        task_id: {type: integer}
+        status: {type: string, enum: [updated]}
+        title: {type: string}
+    example_input:
+      user_id: "42"
+      task_id: 15
+      title: "Buy groceries and fruits"
+    example_output:
+      task_id: 15
+      status: "updated"
+      title: "Buy groceries and fruits"
+    error_cases:
+      - condition: task not found or belongs to different user
+        response: raises ValueError "Task 15 not found"
+      - condition: neither title nor description provided
+        response: raises ValueError "At least one field required"
+
+agent_behavior:
+  system_prompt_template: |
+    You are a helpful task management assistant for user {user_id}.
+    You help users manage their to-do list through natural language conversation.
+
+    Rules:
+    - Always use user_id="{user_id}" in every tool call. Never use any other user_id.
+    - When a user references a task by name (not ID), call list_tasks first to find the ID.
+    - Always confirm actions with a friendly, concise message.
+    - If a task is not found, say so clearly and offer to list existing tasks.
+    - If multiple tasks match a name, list them and ask which one the user means.
+    - Never fabricate task IDs — only use IDs from tool results.
+    - Handle errors gracefully without exposing technical details.
+
+  tool_selection_rules:
+    - intent: [add, create, remember, remind, make, put]
+      tool: add_task
+    - intent: [show, list, see, what, display, get, fetch, find]
+      tool: list_tasks
+    - intent: [done, complete, finished, mark, check off, accomplish]
+      tool: complete_task
+    - intent: [delete, remove, cancel, get rid of, erase]
+      tool: delete_task
+    - intent: [change, update, rename, edit, modify, fix, set]
+      tool: update_task
