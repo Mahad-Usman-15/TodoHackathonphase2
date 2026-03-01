@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import LandingNav from "@/components/landing/LandingNav";
 import HeroSection from "@/components/landing/HeroSection";
+import AiSection from "@/components/landing/AiSection";
 import FeaturesGrid from "@/components/landing/FeaturesGrid";
 import HowItWorks from "@/components/landing/HowItWorks";
 import SecuritySection from "@/components/landing/SecuritySection";
@@ -37,6 +38,7 @@ export default function Home() {
     <main className="bg-brand-bg min-h-screen">
       <LandingNav />
       <HeroSection />
+      <AiSection />
       <FeaturesGrid />
       <HowItWorks />
       <SecuritySection />
