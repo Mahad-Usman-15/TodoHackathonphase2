@@ -7,6 +7,7 @@ import HowItWorks from "@/components/landing/HowItWorks";
 import SecuritySection from "@/components/landing/SecuritySection";
 import FaqAccordion from "@/components/landing/FaqAccordion";
 import LandingFooter from "@/components/landing/LandingFooter";
+import HomeGuard from "@/components/landing/HomeGuard";
 
 export const metadata: Metadata = {
   title: {
@@ -35,15 +36,17 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <main className="bg-brand-bg min-h-screen">
-      <LandingNav />
-      <HeroSection />
-      <AiSection />
-      <FeaturesGrid />
-      <HowItWorks />
-      <SecuritySection />
-      <FaqAccordion />
-      <LandingFooter />
-    </main>
+    <HomeGuard>
+      <main className="bg-brand-bg min-h-screen">
+        <LandingNav />
+        <HeroSection />
+        <AiSection />
+        <FeaturesGrid />
+        <HowItWorks />
+        <SecuritySection />
+        <FaqAccordion />
+        <LandingFooter />
+      </main>
+    </HomeGuard>
   );
 }

@@ -1,20 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/contexts/auth_context";
 
 export default function LandingNav() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      router.replace("/dashboard");
-    }
-  }, [isAuthenticated, isLoading, router]);
-
   return (
     <nav className="sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-md border-b border-brand-primary/20">
       <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
