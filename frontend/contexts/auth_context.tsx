@@ -31,20 +31,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // Try to get current user with existing access token
+        // Try to get current user with existing in-memory access token
         const userData = await api.getMe();
         setUser(userData);
       } catch {
-        // Access token missing/expired — try silent refresh
+        // Try silent token refresh (only works if browser has a valid refresh token cookie)
         try {
           await api.refreshToken();
           const userData = await api.getMe();
           setUser(userData);
         } catch {
-          // Both failed — session has expired
+          // Both failed — user is not authenticated (new visitor, no cookies, or cold-start)
+          // Do NOT set sessionExpired here — we can't distinguish "no session" from "expired session"
+          // sessionExpired is set only by the auth:unauthorized event during active use
           setUser(null);
-          setSessionExpired(true);
-          router.push("/auth/login?expired=true");
         }
       } finally {
         setIsLoading(false);
@@ -53,8 +53,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initAuth();
 
+    // Fires when an active API call returns 401 — user WAS authenticated, session lapsed mid-use
     const handleUnauthorized = () => {
       setUser(null);
+      setSessionExpired(true);
     };
     window.addEventListener("auth:unauthorized", handleUnauthorized);
     return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
