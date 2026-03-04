@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 from db import get_session
 from middleware.auth_middleware import get_current_user
 from models.conversation import Conversation
+from models.task import Task
 from models.user import User
 from services.chat_service import load_or_create_conversation, load_history, save_message
 
@@ -24,15 +25,30 @@ router = APIRouter()
 SYSTEM_PROMPT_TEMPLATE = (
     "You are a helpful task management assistant for user {user_id}.\n"
     "You help users manage their to-do list through natural language conversation.\n\n"
+    "Current tasks:\n"
+    "{task_snapshot}\n\n"
     "Rules:\n"
     '- Always use user_id="{user_id}" in every tool call. Never use any other user_id.\n'
-    "- When a user references a task by name (not ID), call list_tasks first to find the ID.\n"
+    "- Use the task IDs listed above directly — do NOT call list_tasks just to look up an ID you already have.\n"
     "- Always confirm actions with a friendly, concise message.\n"
-    "- If a task is not found, say so clearly and offer to list existing tasks.\n"
-    "- If multiple tasks match a name, list them and ask which one the user means.\n"
-    "- Never fabricate task IDs — only use IDs from tool results.\n"
+    "- If a task is not found, say so clearly.\n"
+    "- Never fabricate task IDs — only use IDs from the snapshot above or from tool results.\n"
     "- Handle errors gracefully without exposing technical details."
 )
+
+
+def _build_task_snapshot(session: Session, user_id: int) -> str:
+    tasks = session.exec(
+        select(Task).where(Task.user_id == user_id)
+    ).all()
+    if not tasks:
+        return "(no tasks yet)"
+    lines = []
+    for t in tasks:
+        status = "completed" if t.completed else "pending"
+        desc = f" — {t.description}" if t.description else ""
+        lines.append(f"  - ID {t.id}: {t.title}{desc} [{status}]")
+    return "\n".join(lines)
 
 # Absolute path to mcp_server.py so subprocess works from any working directory
 _MCP_SERVER_PATH = os.path.join(
@@ -71,6 +87,8 @@ async def chat(
             history = load_history(session, conv.id)
             save_message(session, conv.id, user_id, "user", req.message)
 
+            task_snapshot = _build_task_snapshot(session, user_id)
+
             # Build message list: history + new user message
             messages = history + [{"role": "user", "content": req.message}]
 
@@ -79,7 +97,7 @@ async def chat(
                 base_url="https://api.groq.com/openai/v1",
             )
             model = OpenAIChatCompletionsModel(
-                model="mixtral-8x7b-32768",
+                model="llama-3.3-70b-versatile",
                 openai_client=groq_client,
             )
 
@@ -93,7 +111,10 @@ async def chat(
             ) as mcp:
                 agent = Agent(
                     name="taskify",
-                    instructions=SYSTEM_PROMPT_TEMPLATE.format(user_id=str(user_id)),
+                    instructions=SYSTEM_PROMPT_TEMPLATE.format(
+                        user_id=str(user_id),
+                        task_snapshot=task_snapshot,
+                    ),
                     model=model,
                     mcp_servers=[mcp],
                     model_settings=ModelSettings(parallel_tool_calls=False),
