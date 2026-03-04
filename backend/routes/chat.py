@@ -63,7 +63,7 @@ async def chat(
     async def event_stream():
         try:
             from openai import AsyncOpenAI
-            from agents import Agent, Runner, OpenAIChatCompletionsModel
+            from agents import Agent, Runner, OpenAIChatCompletionsModel, ModelSettings
             from agents.mcp import MCPServerStdio
             from agents.stream_events import RawResponsesStreamEvent, RunItemStreamEvent
 
@@ -96,6 +96,7 @@ async def chat(
                     instructions=SYSTEM_PROMPT_TEMPLATE.format(user_id=str(user_id)),
                     model=model,
                     mcp_servers=[mcp],
+                    model_settings=ModelSettings(parallel_tool_calls=False),
                 )
                 streamed = Runner.run_streamed(agent, messages)
 
