@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth_context";
 
@@ -12,6 +12,8 @@ export function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isExpired = searchParams.get("expired") === "true";
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -42,6 +44,11 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {isExpired && !error && (
+        <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/30 p-3 font-body text-sm text-yellow-400">
+          Your session has expired — please log in again.
+        </div>
+      )}
       {error && (
         <div className="rounded-lg bg-brand-cta/10 border border-brand-cta/30 p-3 font-body text-sm text-brand-cta/90">
           {error}

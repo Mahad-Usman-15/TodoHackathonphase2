@@ -1,13 +1,19 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+
+const MAX_CHARS = 2000;
+const COUNTER_THRESHOLD = 1800;
 
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   id?: number;
+  created_at?: string;
 }
 
 interface ChatInterfaceProps {
@@ -64,14 +70,26 @@ export default function ChatInterface({
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  // T010: textarea auto-resize
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [input]);
+
   const sendMessage = useCallback(async () => {
     const text = input.trim();
-    if (!text || isLoading) return;
+    if (!text || isLoading || input.length > MAX_CHARS) return;
 
     setInput("");
     setIsLoading(true);
 
-    const userMsg: ChatMessage = { role: "user", content: text };
+    const userMsg: ChatMessage = {
+      role: "user",
+      content: text,
+      created_at: new Date().toISOString(),
+    };
     setMessages((prev) => [...prev, userMsg]);
 
     try {
@@ -94,7 +112,10 @@ export default function ChatInterface({
       let buffer = "";
 
       // Add empty assistant message placeholder for streaming
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "", created_at: new Date().toISOString() },
+      ]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -111,7 +132,6 @@ export default function ChatInterface({
           try {
             const event = JSON.parse(json);
             if (event.type === "delta") {
-              // Append delta to the last assistant message in real time
               setMessages((prev) => {
                 const updated = [...prev];
                 const last = updated[updated.length - 1];
@@ -124,7 +144,6 @@ export default function ChatInterface({
                 return updated;
               });
             } else if (event.type === "tool_called") {
-              // Briefly show a tool indicator in the streaming message
               setMessages((prev) => {
                 const updated = [...prev];
                 const last = updated[updated.length - 1];
@@ -137,12 +156,12 @@ export default function ChatInterface({
                 return updated;
               });
             } else if (event.type === "done") {
-              // Replace streaming placeholder with the canonical final response
               setMessages((prev) => {
                 const updated = [...prev];
                 updated[updated.length - 1] = {
                   role: "assistant",
                   content: event.response,
+                  created_at: new Date().toISOString(),
                 };
                 return updated;
               });
@@ -151,11 +170,24 @@ export default function ChatInterface({
                 onConversationCreated?.(event.conversation_id);
               }
             } else if (event.type === "error") {
+              // T008: typed SSE error routing
+              let errorMessage = "Something went wrong — please try again.";
+              const errorType = event.error_type ?? "service_error";
+
+              if (errorType === "cold_start") {
+                errorMessage = "⏳ Starting up, please wait… (send again in a moment)";
+              } else if (errorType === "rate_limit") {
+                errorMessage = "⚠️ Too many requests — try again shortly.";
+              } else {
+                errorMessage = "Something went wrong — please try again.";
+              }
+
               setMessages((prev) => {
                 const updated = [...prev];
                 updated[updated.length - 1] = {
                   role: "assistant",
-                  content: event.error,
+                  content: errorMessage,
+                  created_at: new Date().toISOString(),
                 };
                 return updated;
               });
@@ -170,8 +202,8 @@ export default function ChatInterface({
         ...prev,
         {
           role: "assistant",
-          content:
-            "I'm having trouble responding right now. Please try again in a moment.",
+          content: "Something went wrong — please try again.",
+          created_at: new Date().toISOString(),
         },
       ]);
     } finally {
@@ -186,6 +218,18 @@ export default function ChatInterface({
     }
   };
 
+  // T012: timestamp formatter
+  function formatTime(iso?: string): string {
+    if (!iso) return "";
+    return new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date(iso));
+  }
+
+  const overLimit = input.length > MAX_CHARS;
+  const nearLimit = input.length > COUNTER_THRESHOLD;
+
   return (
     <div className="flex flex-col h-full bg-brand-bg">
       {/* Header */}
@@ -196,8 +240,8 @@ export default function ChatInterface({
         {onNewConversation && (
           <button
             onClick={onNewConversation}
-            title="New conversation"
-            className="flex items-center gap-1.5 text-sm text-white/60 hover:text-brand-cta border border-brand-primary/30 hover:border-brand-cta rounded-lg px-3 py-1.5 transition-colors"
+            aria-label="Start new conversation"
+            className="flex items-center gap-1.5 text-sm text-white/60 hover:text-brand-cta border border-brand-primary/30 hover:border-brand-cta rounded-lg px-3 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cta focus-visible:ring-offset-2 focus-visible:ring-offset-brand-bg"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -257,7 +301,7 @@ export default function ChatInterface({
           messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
             >
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm font-body ${
@@ -266,10 +310,22 @@ export default function ChatInterface({
                     : "bg-brand-primary/20 text-white/90 rounded-bl-sm border border-brand-primary/20"
                 }`}
               >
-                <p className="whitespace-pre-wrap leading-relaxed">
-                  {msg.content}
-                </p>
+                {msg.role === "assistant" ? (
+                  <div className="prose prose-invert prose-sm max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                )}
               </div>
+              {/* T012: timestamp below each bubble */}
+              {msg.created_at && (
+                <span className="text-xs text-gray-500 mt-1 px-1">
+                  {formatTime(msg.created_at)}
+                </span>
+              )}
             </div>
           ))
         )}
@@ -300,13 +356,16 @@ export default function ChatInterface({
             placeholder="Message your AI assistant…"
             rows={1}
             disabled={isLoading}
-            className="flex-1 resize-none rounded-xl bg-brand-primary/10 border border-brand-primary/30 text-white placeholder-white/40 font-body text-sm px-4 py-2.5 focus:outline-none focus:border-brand-cta transition-colors disabled:opacity-50 max-h-32 overflow-auto"
+            maxLength={MAX_CHARS}
+            aria-label="Chat message input"
+            className="flex-1 resize-none rounded-xl bg-brand-primary/10 border border-brand-primary/30 text-white placeholder-white/40 font-body text-sm px-4 py-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-cta focus-visible:ring-offset-2 focus-visible:ring-offset-brand-bg focus:border-brand-cta transition-colors disabled:opacity-50 max-h-32 overflow-y-auto"
             style={{ minHeight: "42px" }}
           />
           <button
             onClick={sendMessage}
-            disabled={isLoading || !input.trim()}
-            className="flex-shrink-0 w-10 h-10 rounded-xl bg-brand-cta hover:bg-brand-cta-hover disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+            disabled={isLoading || !input.trim() || overLimit}
+            aria-label="Send message"
+            className="flex-shrink-0 w-10 h-10 rounded-xl bg-brand-cta hover:bg-brand-cta-hover disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cta focus-visible:ring-offset-2 focus-visible:ring-offset-brand-bg"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -324,9 +383,18 @@ export default function ChatInterface({
             </svg>
           </button>
         </div>
-        <p className="text-white/30 text-xs font-body mt-1.5 text-center">
-          Enter to send · Shift+Enter for new line
-        </p>
+
+        {/* T011: character counter */}
+        <div className="flex items-center justify-between mt-1.5">
+          <p className="text-white/30 text-xs font-body">
+            Enter to send · Shift+Enter for new line
+          </p>
+          {nearLimit && (
+            <span className={`text-xs font-body ${overLimit ? "text-red-400" : "text-yellow-400"}`}>
+              {input.length} / {MAX_CHARS}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

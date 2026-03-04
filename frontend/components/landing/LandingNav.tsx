@@ -12,13 +12,13 @@ export default function LandingNav() {
         <div className="flex items-center gap-3">
           <Link
             href="/auth/login"
-            className="font-body text-sm text-white/70 hover:text-white transition-colors px-3 py-1.5"
+            className="font-body text-sm text-white/70 hover:text-white transition-colors px-3 py-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cta focus-visible:ring-offset-2 focus-visible:ring-offset-brand-bg"
           >
             Sign In
           </Link>
           <Link
             href="/auth/register"
-            className="font-body text-sm bg-brand-cta hover:bg-brand-cta-hover text-white rounded-lg px-4 py-2 transition-colors"
+            className="font-body text-sm bg-brand-cta hover:bg-brand-cta-hover text-white rounded-lg px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-cta"
           >
             Get Started
           </Link>

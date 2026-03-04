@@ -95,4 +95,23 @@ export const api = {
   getConversationMessages(userId: number, conversationId: number): Promise<{ id: number; role: string; content: string; created_at: string }[]> {
     return request(`/${userId}/conversations/${conversationId}/messages`);
   },
+
+  refreshToken(): Promise<{ access_token: string }> {
+    return fetch(`${BASE_URL}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+    }).then((res) => {
+      if (!res.ok) throw new Error("Token refresh failed");
+      return res.json();
+    });
+  },
+
+  healthPing(): Promise<void> {
+    return fetch(`${BASE_URL}/health`, {
+      credentials: "include",
+    })
+      .then(() => {})
+      .catch(() => {});
+  },
 };

@@ -22,7 +22,7 @@ const oswald = Oswald({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://todo-hackathonphase2.vercel.app"),
+  metadataBase: new URL("https://taskify-ainative.vercel.app"),
   title: {
     default: "Taskify — Smart Task Manager",
     template: "%s | Taskify",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   openGraph: {
     siteName: "Taskify",
     type: "website",
-    url: "https://todo-hackathonphase2.vercel.app",
+    url: "https://taskify-ainative.vercel.app",
     title: "Taskify — Smart Task Manager",
     description:
       "Taskify helps you manage tasks securely with JWT authentication and a clean, fast interface. Free forever.",
@@ -51,7 +51,7 @@ const jsonLd = {
     {
       "@type": "WebApplication",
       name: "Taskify",
-      url: "https://todo-hackathonphase2.vercel.app",
+      url: "https://taskify-ainative.vercel.app",
       applicationCategory: "ProductivityApplication",
       operatingSystem: "Web",
       description:
@@ -65,7 +65,7 @@ const jsonLd = {
     {
       "@type": "Organization",
       name: "Taskify",
-      url: "https://todo-hackathonphase2.vercel.app",
+      url: "https://taskify-ainative.vercel.app",
     },
   ],
 };

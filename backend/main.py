@@ -40,6 +40,11 @@ def health_check():
     return {"status": "ok"}
 
 
+@app.get("/api/health")
+def api_health_check():
+    return {"status": "ok"}
+
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}

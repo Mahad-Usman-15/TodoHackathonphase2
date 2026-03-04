@@ -70,7 +70,8 @@ export default function DashboardHeader({
             </span>
             <button
               onClick={onLogout}
-              className="font-body text-sm text-white/60 hover:text-brand-cta border border-brand-primary/30 hover:border-brand-cta rounded-lg px-3 py-1.5 transition-colors"
+              aria-label="Sign out"
+              className="font-body text-sm text-white/60 hover:text-brand-cta border border-brand-primary/30 hover:border-brand-cta rounded-lg px-3 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cta focus-visible:ring-offset-2 focus-visible:ring-offset-brand-bg"
             >
               Sign Out
             </button>

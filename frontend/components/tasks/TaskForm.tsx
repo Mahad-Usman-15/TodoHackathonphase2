@@ -87,7 +87,7 @@ export default function TaskForm({ userId, onTaskCreated, onError }: TaskFormPro
           <button
             type="submit"
             disabled={isSubmitting || !title.trim()}
-            className="font-heading font-semibold text-sm bg-brand-cta hover:bg-brand-cta-hover text-white rounded-lg px-6 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="font-heading font-semibold text-sm bg-brand-cta hover:bg-brand-cta-hover text-white rounded-lg px-6 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cta focus-visible:ring-offset-2 focus-visible:ring-offset-brand-bg"
           >
             {isSubmitting ? "Adding..." : "Add Task"}
           </button>

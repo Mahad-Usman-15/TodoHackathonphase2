@@ -1,5 +1,8 @@
 import json
+import logging
 import os
+import subprocess
+import asyncio
 from datetime import datetime
 from typing import Optional
 
@@ -7,6 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import Session, select
 from sse_starlette.sse import EventSourceResponse
+
+logger = logging.getLogger(__name__)
 
 from db import get_session
 from middleware.auth_middleware import get_current_user
@@ -138,13 +143,39 @@ async def chat(
                 })
             }
 
-        except Exception:
+        except (subprocess.SubprocessError, ConnectionError, asyncio.TimeoutError) as e:
+            logger.exception("cold_start error: %s", e)
             yield {
                 "data": json.dumps({
                     "type": "error",
-                    "error": "I'm having trouble responding right now. Please try again in a moment.",
+                    "error_type": "cold_start",
+                    "error": "Starting up, please wait…",
+                    "retry_after": None,
                 })
             }
+        except Exception as e:
+            # Check for Groq rate limit (HTTP 429 from openai SDK)
+            status_code = getattr(e, "status_code", None) or getattr(getattr(e, "response", None), "status_code", None)
+            if status_code == 429:
+                logger.exception("rate_limit error: %s", e)
+                yield {
+                    "data": json.dumps({
+                        "type": "error",
+                        "error_type": "rate_limit",
+                        "error": "Too many requests — try again shortly.",
+                        "retry_after": 30,
+                    })
+                }
+            else:
+                logger.exception("service_error: %s", e)
+                yield {
+                    "data": json.dumps({
+                        "type": "error",
+                        "error_type": "service_error",
+                        "error": "Something went wrong — please try again.",
+                        "retry_after": None,
+                    })
+                }
 
     return EventSourceResponse(event_stream())
 
