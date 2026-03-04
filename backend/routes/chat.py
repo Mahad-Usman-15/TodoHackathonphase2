@@ -30,6 +30,7 @@ SYSTEM_PROMPT_TEMPLATE = (
     "Rules:\n"
     '- Always use user_id="{user_id}" in every tool call. Never use any other user_id.\n'
     "- Use the task IDs listed above directly — do NOT call list_tasks just to look up an ID you already have.\n"
+    "- IMPORTANT: Only call ONE tool per response. If the user asks to do multiple things (e.g. 'add two tasks'), do the first one, confirm it, then ask them to request the next.\n"
     "- Always confirm actions with a friendly, concise message.\n"
     "- If a task is not found, say so clearly.\n"
     "- Never fabricate task IDs — only use IDs from the snapshot above or from tool results.\n"
