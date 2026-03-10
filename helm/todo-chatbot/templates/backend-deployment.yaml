@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend
+  labels:
+    app: todo-chatbot-backend
+spec:
+  replicas: {{ .Values.replicaCount.backend }}
+  selector:
+    matchLabels:
+      app: todo-chatbot-backend
+  template:
+    metadata:
+      labels:
+        app: todo-chatbot-backend
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.image.backend.repository }}:{{ .Values.image.backend.tag }}"
+          imagePullPolicy: {{ .Values.image.backend.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.backend.targetPort }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secretName }}
+          readinessProbe:
+            httpGet:
+              path: /docs
+              port: {{ .Values.service.backend.targetPort }}
+            initialDelaySeconds: 10
+            periodSeconds: 5

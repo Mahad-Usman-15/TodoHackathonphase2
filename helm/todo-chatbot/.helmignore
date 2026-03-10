@@ -1,0 +1,9 @@
+# Patterns to ignore when packaging Helm charts
+.git/
+.gitignore
+*.md
+*.txt
+.DS_Store
+Thumbs.db
+*.secret.yaml
+secrets/

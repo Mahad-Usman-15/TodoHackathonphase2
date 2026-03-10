@@ -1,28 +1,32 @@
 <!--
 Sync Impact Report:
-Version change: 1.0.2 → 1.1.0
+Version change: 1.1.0 → 1.2.0
 Modified principles:
-  - Technology Adherence: expanded to include Phase III stack (OpenAI Agents SDK, MCP SDK, OpenAI ChatKit, Groq)
-  - Architecture Simplicity: extended to cover stateless chat + MCP pattern
-  - API Conventions: SSE now permitted exclusively for /api/{user_id}/chat streaming (removed blanket "no SSE")
-  - Database Schema Standards: added conversations + messages tables (integer PKs maintained)
-  - Code Organization: added mcp-server/ and new backend/frontend directories for Phase III
-  - Absolute Prohibitions: removed "no SSE" (now permitted for chat), added MCP-specific prohibitions
+  - Principle 3 (Architecture Simplicity): Removed blanket "No Kubernetes" prohibition;
+    Phase IV explicitly requires Minikube + Helm; per-phase scoping added
+  - Principle 4 (Technology Adherence): Phase IV stack added as additive (Docker, Minikube,
+    Helm, Gordon, kubectl-ai, kagent)
+  - Deployment Constraints: Updated to reflect Phase IV Minikube local deployment
+  - Absolute Prohibitions: Removed "No Kubernetes" entry; added Phase IV-specific
+    prohibitions (no cloud K8s, no secrets in values.yaml, no raw kubectl for app deploy)
 Added sections:
-  - Phase III: AI Chatbot (new major section)
-  - MCP Server Standards (new principle)
-  - AI Agent Behavior Standards (new principle)
-  - Phase III Success Criteria (new checklist)
-  - Phase III Evaluation additions
-Removed sections: None (Phase II fully preserved)
+  - Principle 9: Cloud-Native Operations Standards (Phase IV — new principle)
+  - Phase IV Technology Stack (additive block in Technology Stack section)
+  - Phase IV Helm/Kubernetes directory structure in Code Organization
+  - Phase IV AIOps Standards (AI DevOps tooling rules)
+  - Phase IV Success Criteria checklist
+  - Phase IV entry in Evaluation Rubric Working Implementation
+  - Phase IV in Final Reminders priorities
+Removed sections: None (Phase II and Phase III fully preserved)
 Templates requiring updates:
   ✅ .specify/memory/constitution.md (this file)
-  ⚠ .specify/templates/plan-template.md (Constitution Check gates should reference Phase III MCP principle)
-  ⚠ .specify/templates/spec-template.md (no structural change needed)
-  ⚠ .specify/templates/tasks-template.md (no structural change needed)
+  ⚠ .specify/templates/plan-template.md (Constitution Check gates should reference
+     Phase IV Cloud-Native Operations Standards principle)
+  ✅ .specify/templates/spec-template.md (no structural change needed)
+  ✅ .specify/templates/tasks-template.md (no structural change needed)
 Follow-up TODOs:
-  - OPENAI_API_KEY / GROQ_API_KEY: confirm which provider is used at implementation time (Groq confirmed free tier)
-  - NEXT_PUBLIC_OPENAI_DOMAIN_KEY: obtain from OpenAI domain allowlist after Vercel deploy
+  - Confirm Gordon availability in region/tier before Phase IV implementation starts
+  - kubectl-ai requires Go installed; verify Go is available on developer machine
 -->
 
 # Todo Full-Stack Web Application — Hackathon Constitution
@@ -42,15 +46,20 @@ Zero tolerance for manual coding or copy-pasting code.
 
 ### 3. Architecture Simplicity (Basic Level)
 This is a Basic Level hackathon project, not an enterprise system; Simple, working implementation
-over complex architecture; No premature optimization; No infrastructure beyond requirements
-(no Redis, no load balancers, no Kubernetes); Phase II focus: Working authentication + Task CRUD +
-Clean code; Phase III focus: Stateless AI chat + MCP tool calling + DB-persisted conversation state.
+over complex architecture; No premature optimization; No infrastructure beyond phase requirements.
+- **Phase II focus**: Working authentication + Task CRUD + Clean code
+  (no Redis, no load balancers, no Kubernetes)
+- **Phase III focus**: Stateless AI chat + MCP tool calling + DB-persisted conversation state
+  (no Kubernetes, MCP as subprocess within existing backend)
+- **Phase IV focus**: Local Kubernetes deployment via Minikube + Helm charts; Kubernetes IS
+  required and expected; no cloud K8s services (EKS, GKE, AKS); local only.
 
 ### 4. Technology Adherence (Strict)
 Only approved technologies from the stack per phase; No substitutions without spec documentation;
 No additional frameworks or libraries without justification; Keep dependencies minimal.
-Phase II stack is immutable. Phase III stack additions are additive only — they do not replace
-Phase II components.
+Phase II stack is immutable. Phase III additions are additive only — they do not replace
+Phase II components. Phase IV additions are additive only — they do not replace Phase II/III
+components.
 
 ### 5. Security-First Approach (Mandatory)
 All authentication MUST use JWT with HS256 algorithm; Passwords MUST be hashed with bcrypt;
@@ -58,6 +67,8 @@ HTTP-only cookies for refresh tokens; User data isolation required; SQL injectio
 SQLModel ORM; XSS prevention via proper cookie settings.
 **CONFIRMED DECISION**: Better Auth is NOT used. The existing JWT/bcrypt system is the only
 authentication method across all phases. This decision is locked and must not be reversed.
+**Phase IV addition**: Kubernetes Secrets MUST be used for all sensitive values (AUTH_SECRET,
+DATABASE_URL, GROQ_API_KEY); secrets MUST NOT appear in Helm values.yaml committed to git.
 
 ### 6. Parallel Development Coordination
 Backend and frontend teams work in parallel with synchronized integration points;
@@ -77,6 +88,18 @@ task-not-found errors gracefully without crashing; Agent MUST use list_tasks bef
 when user references a task by name (not ID); Conversation history MUST be loaded from DB on
 every request (stateless server, stateful DB); Agent MUST NOT fabricate task IDs — always derive
 from tool results.
+
+### 9. Cloud-Native Operations Standards (Phase IV — Mandatory)
+All Phase IV deployments MUST use Helm charts — no raw `kubectl apply` for application resources;
+Minikube is the ONLY Kubernetes target — no cloud providers (EKS, GKE, AKS);
+Docker Desktop (v4.53+) with Gordon AI agent MUST be used for container build/run operations;
+kubectl-ai MUST be used to demonstrate AI-assisted Kubernetes operations in at least one
+deployment step; kagent MUST be used to demonstrate cluster health analysis;
+Kubernetes Secrets MUST hold AUTH_SECRET, DATABASE_URL, and GROQ_API_KEY — never hardcoded
+in templates or values.yaml; Database (Neon PostgreSQL) remains external — no PostgreSQL pod;
+Frontend and backend each MUST have a dedicated Dockerfile (multi-stage for frontend);
+Images MUST be loaded into Minikube's registry (`minikube image load`) before Helm install;
+`minikube tunnel` or NodePort MUST be used to expose services to localhost for browser access.
 
 ---
 
@@ -98,6 +121,16 @@ from tool results.
 - **MCP Server**: Official MCP SDK (Python `mcp` package) — stdio transport
 - **Streaming**: Server-Sent Events (SSE) — permitted ONLY for `/api/{user_id}/chat` endpoint
 
+**Phase IV (Additive — do not remove Phase II/III entries):**
+- **Container Runtime**: Docker Desktop 4.53+ (required for Gordon AI agent)
+- **Docker AI**: Gordon — Docker AI Agent (enable in Docker Desktop Settings > Beta features)
+- **Orchestration**: Kubernetes via Minikube (local cluster only — no cloud K8s)
+- **Package Manager**: Helm 3.x (all K8s deployments via Helm charts — no raw kubectl apply)
+- **AI DevOps (kubectl)**: kubectl-ai — natural language to kubectl command generation
+- **AI DevOps (cluster)**: kagent — AI-assisted cluster health analysis and optimization
+- **Dockerfile (frontend)**: Multi-stage build (node:18-alpine builder → node:18-alpine runner)
+- **Dockerfile (backend)**: Single-stage (python:3.11-slim)
+
 ### Authentication Architecture (Fixed — All Phases)
 Algorithm: HS256 (symmetric) with AUTH_SECRET environment variable;
 Access tokens: 15 minutes lifetime, stored in-memory on frontend;
@@ -106,6 +139,7 @@ Cookie settings: HttpOnly=true, Secure=true (production), SameSite='lax';
 No token rotation, no blacklisting, no refresh token hashing (keep it simple);
 Backend validates JWT on every request, extracts user_id, filters data by user.
 **Phase III chat endpoint uses the same get_current_user() dependency — no new auth logic.**
+**Phase IV Kubernetes deployments inject AUTH_SECRET via Kubernetes Secret — same value, new delivery method.**
 
 ### Database Schema Standards
 Primary keys: Auto-increment integers (not UUIDs, not strings) for ALL tables;
@@ -157,6 +191,30 @@ No GraphQL, no WebSockets.
 7. Stream response back to ChatKit via SSE
 8. Server holds NO in-memory state between requests
 
+### Helm Chart Structure (Phase IV — Fixed Contract)
+
+```
+helm/
+└── todo-chatbot/
+    ├── Chart.yaml              (name: todo-chatbot, version: 1.0.0, appVersion: phase4)
+    ├── values.yaml             (replicas, image names, ports, resource limits — NO secrets)
+    └── templates/
+        ├── secret.yaml         (K8s Secret: AUTH_SECRET, DATABASE_URL, GROQ_API_KEY)
+        ├── backend-deployment.yaml
+        ├── backend-service.yaml
+        ├── frontend-deployment.yaml
+        └── frontend-service.yaml
+```
+
+`values.yaml` MUST NOT contain secret values. Secrets MUST be injected via
+`helm install --set-string secret.authSecret=...` or a separate sealed-secrets approach.
+
+### Phase IV AIOps Standards (Mandatory for Judging)
+- Gordon MUST be used for at least: image build, image load into Minikube
+- kubectl-ai MUST be used for at least: pod status check, scaling, troubleshooting
+- kagent MUST be used for at least: cluster health analysis
+- All AI tool interactions MUST be documented in the PHR for Phase IV
+
 ### Code Organization (Non-Negotiable)
 
 ```
@@ -165,26 +223,39 @@ phase2/
 ├── specs/                       (All specifications)
 │   ├── overview.md
 │   ├── 003-ui-seo-upgrade/      (Phase II — complete)
-│   └── 004-ai-chatbot/          (Phase III — new)
+│   ├── 004-ai-chatbot/          (Phase III — complete)
+│   └── 005-kubernetes-deploy/   (Phase IV — new)
 ├── CLAUDE.md                    (Root instructions)
-├── frontend/                    (Next.js 16+ App Router)
+├── frontend/
+│   ├── Dockerfile               (Phase IV — NEW multi-stage build)
 │   ├── app/
 │   │   ├── dashboard/           (Phase II — task CRUD UI)
-│   │   ├── chat/                (Phase III — NEW chatbot page)
+│   │   ├── chat/                (Phase III — chatbot page)
 │   │   └── auth/                (Phase II — login/register)
 │   └── components/
-│       ├── chat/                (Phase III — NEW ChatKit wrapper)
-│       └── ...                  (Phase II components)
-├── backend/                     (FastAPI)
-│   ├── main.py                  (entry — register chat router)
-│   ├── models.py                (add Conversation + Message models)
+│       ├── chat/                (Phase III — ChatKit wrapper)
+│       └── ...
+├── backend/
+│   ├── Dockerfile               (Phase IV — NEW single-stage build)
+│   ├── main.py
+│   ├── models.py
 │   ├── routes/
-│   │   ├── tasks.py             (Phase II — unchanged)
-│   │   ├── auth.py              (Phase II — unchanged)
-│   │   └── chat.py              (Phase III — NEW SSE endpoint)
-│   ├── mcp_server.py            (Phase III — NEW MCP stdio server)
-│   └── db.py                    (unchanged)
-└── docker-compose.yml
+│   │   ├── tasks.py
+│   │   ├── auth.py
+│   │   └── chat.py              (Phase III)
+│   ├── mcp_server.py            (Phase III)
+│   └── db.py
+├── helm/                        (Phase IV — NEW)
+│   └── todo-chatbot/
+│       ├── Chart.yaml
+│       ├── values.yaml
+│       └── templates/
+│           ├── secret.yaml
+│           ├── backend-deployment.yaml
+│           ├── backend-service.yaml
+│           ├── frontend-deployment.yaml
+│           └── frontend-service.yaml
+└── docker-compose.yml           (Phase II/III — unchanged)
 ```
 
 ### Security Requirements (Mandatory — All Phases)
@@ -194,6 +265,8 @@ XSS prevention via HTTP-only cookies; CSRF protection via SameSite cookies;
 Input validation on all endpoints; User data isolation enforced at every layer.
 **Phase III addition**: MCP tools MUST validate user_id against authenticated user — agent-supplied
 user_id MUST match the JWT-authenticated user_id. Tool calls with mismatched user_id MUST be rejected.
+**Phase IV addition**: Kubernetes Secrets MUST hold all sensitive values. Helm values.yaml
+committed to git MUST contain only non-sensitive defaults. Docker images MUST NOT embed secrets.
 
 ### Frontend Patterns (Required)
 Server components by default; Client components only for interactivity ('use client' directive);
@@ -226,6 +299,11 @@ pydantic-settings; CORS configured for frontend origin only.
 ❌ MCP tools that bypass user_id validation
 ❌ Storing AI API keys (GROQ_API_KEY) in frontend code or committed files
 ❌ Better Auth or any alternative auth library — existing JWT/bcrypt is final
+❌ Cloud Kubernetes services (EKS, GKE, AKS, DigitalOcean K8s) — Minikube only (Phase IV)
+❌ Raw `kubectl apply` for application deployment — Helm charts required (Phase IV)
+❌ Secret values (AUTH_SECRET, DATABASE_URL, GROQ_API_KEY) in Helm values.yaml (Phase IV)
+❌ Secret values embedded in Docker images or Dockerfiles (Phase IV)
+❌ PostgreSQL pod in Kubernetes cluster — Neon external DB only (Phase IV)
 
 ### Development Constraints
 All features MUST have corresponding spec file; Spec MUST be read before implementation;
@@ -234,13 +312,21 @@ No premature optimization; Database migrations documented in specs first.
 
 ### File Naming Constraints
 Specs: Lowercase with hyphens; Components: PascalCase (.tsx); API files: Lowercase (.ts, .py);
-No spaces in filenames.
+Helm templates: Lowercase with hyphens (.yaml); No spaces in filenames.
 
 ### Deployment Constraints
-Local development with Docker Compose; Simple production deployment;
-Frontend on Vercel (taskify-ainative.vercel.app); Backend on Render (Render free tier);
-MCP server runs as subprocess within Render backend — no separate service;
-No load balancers, no replicas, no Kubernetes.
+**Phase II/III (unchanged):**
+Local development with Docker Compose; Frontend on Vercel (taskify-ainative.vercel.app);
+Backend on Render (Render free tier); MCP server runs as subprocess within Render backend;
+No load balancers, no replicas, no cloud Kubernetes.
+
+**Phase IV (additive — Minikube local deployment):**
+Minikube single-node cluster on developer machine (Docker driver);
+Helm 3.x for all application deployment; kubectl-ai + kagent for AI-assisted operations;
+Frontend and backend each containerized with dedicated Dockerfiles;
+Images loaded into Minikube registry before Helm install;
+Services exposed via NodePort or `minikube tunnel` for localhost access;
+Database remains on Neon (external) — no in-cluster database pod.
 
 ---
 
@@ -261,7 +347,7 @@ No load balancers, no replicas, no Kubernetes.
 ✅ Framer Motion animations on landing page
 ✅ All data persists in Neon PostgreSQL with integer primary keys
 
-### Phase III Completion Checklist (New)
+### Phase III Completion Checklist
 - [ ] `conversations` and `messages` tables created with integer PKs
 - [ ] `POST /api/{user_id}/chat` endpoint returns SSE streaming response
 - [ ] MCP server exposes all 5 tools (add_task, list_tasks, complete_task, delete_task, update_task)
@@ -274,6 +360,24 @@ No load balancers, no replicas, no Kubernetes.
 - [ ] Existing task CRUD UI (`/dashboard`) remains fully functional
 - [ ] Groq API key in environment variable only (never committed)
 - [ ] CORS updated to include chat endpoint
+
+### Phase IV Completion Checklist (New)
+- [ ] `frontend/Dockerfile` multi-stage build produces working Next.js image
+- [ ] `backend/Dockerfile` single-stage build produces working FastAPI image
+- [ ] Gordon used for at least one Docker operation (build or load) — documented in PHR
+- [ ] Minikube cluster started with Docker driver (`minikube start --driver=docker`)
+- [ ] Both images loaded into Minikube registry (`minikube image load`)
+- [ ] Helm chart created at `helm/todo-chatbot/` with all required templates
+- [ ] `helm install todo-chatbot ./helm/todo-chatbot` succeeds
+- [ ] Backend pod reaches Running state and passes health check
+- [ ] Frontend pod reaches Running state
+- [ ] Frontend service accessible via browser on localhost
+- [ ] Frontend can communicate with backend service (ClusterIP)
+- [ ] kubectl-ai used for at least one operation — documented in PHR
+- [ ] kagent used for cluster health analysis — documented in PHR
+- [ ] Kubernetes Secrets hold AUTH_SECRET, DATABASE_URL, GROQ_API_KEY
+- [ ] No secret values appear in committed Helm values.yaml or Dockerfiles
+- [ ] Full app flow works on Minikube: login → tasks → chat
 
 ### Spec-Driven Development Criteria (Judged — All Phases)
 ✅ Every feature has a spec file in `/specs/`
@@ -294,6 +398,8 @@ No load balancers, no replicas, no Kubernetes.
 ✅ No XSS vulnerabilities
 - [ ] GROQ_API_KEY in environment variable only (Phase III)
 - [ ] MCP tool user_id validated against JWT user (Phase III)
+- [ ] Kubernetes Secrets used for all sensitive values (Phase IV)
+- [ ] No secrets in committed Helm values.yaml or Docker images (Phase IV)
 
 ---
 
@@ -305,18 +411,23 @@ Prompts used to generate code; Iterations and refinements documented;
 No manual coding detected; PHR records in `history/prompts/` demonstrate process.
 
 ### Working Implementation (30%)
-**Phase II (15%)**: Authentication flow complete; Task CRUD operational; Data isolated by user;
+**Phase II (10%)**: Authentication flow complete; Task CRUD operational; Data isolated by user;
 Clean dark-theme UI with animations.
-**Phase III (15%)**: Natural language task management working; Conversation context maintained
+**Phase III (10%)**: Natural language task management working; Conversation context maintained
 across requests; MCP tools invoked correctly; Streaming response rendering in ChatKit.
+**Phase IV (10%)**: Both services containerized and deployed on Minikube; Helm chart deploys
+full stack in one command; AI DevOps tools (Gordon, kubectl-ai, kagent) demonstrably used;
+full app flow functional on local cluster.
 
 ### Code Quality (20%)
 Follows technology stack exactly; Proper TypeScript/Python typing;
-Clean separation of concerns; Error handling implemented; Security best practices followed.
+Clean separation of concerns; Error handling implemented; Security best practices followed;
+Helm chart values cleanly separated from secrets.
 
 ### Architecture & Design (10%)
 Simple, maintainable structure; Proper use of CLAUDE.md files;
-Monorepo organization; No over-engineering; MCP + stateless pattern correctly implemented.
+Monorepo organization; No over-engineering; MCP + stateless pattern correctly implemented;
+Cloud-native patterns correctly applied (Helm, K8s Secrets, service discovery).
 
 ---
 
@@ -359,19 +470,23 @@ This is a BASIC LEVEL hackathon project built ENTIRELY with Claude Code.
 2. Task CRUD operations with user isolation (integer user_id matching)
 3. AI chatbot with MCP tools managing tasks via natural language
 4. Stateless chat endpoint with DB-persisted conversation history
-5. Spec-driven development process demonstrated
-6. Clean, simple implementation
+5. Local Kubernetes deployment via Minikube + Helm (Phase IV)
+6. AI DevOps tooling demonstrated: Gordon + kubectl-ai + kagent (Phase IV)
+7. Spec-driven development process demonstrated
+8. Clean, simple implementation
 
 **NOT priorities:**
 - Enterprise-scale architecture
 - Complex infrastructure or separate MCP deployment
+- Cloud Kubernetes (EKS, GKE, AKS)
 - Premature optimization
 - Feature creep beyond Basic Level
 - Better Auth or alternative auth systems
 - Technologies not in approved stack
 
-**Success** = Working Phase II app + Working Phase III chatbot + Clean specs +
-Zero manual coding + Proper workflow documentation + Consistent integer data types
+**Success** = Working Phase II app + Working Phase III chatbot + Phase IV Minikube deployment +
+Clean specs + Zero manual coding + Proper workflow documentation +
+Consistent integer data types + AI DevOps tools demonstrated
 
 ---
 
@@ -387,4 +502,7 @@ All implementations MUST reference the appropriate CLAUDE.md files for guidance.
 with Better Auth or any other authentication library in any future phase. This decision was
 confirmed by the project owner on 2026-02-28 and is a governance-level constraint.
 
-**Version**: 1.1.0 | **Ratified**: 2026-02-17 | **Last Amended**: 2026-02-28
+**Phase IV Kubernetes target is locked to Minikube**: No cloud Kubernetes provider is permitted
+for this hackathon phase. Minikube on Docker Desktop is the single approved deployment target.
+
+**Version**: 1.2.0 | **Ratified**: 2026-02-17 | **Last Amended**: 2026-03-05

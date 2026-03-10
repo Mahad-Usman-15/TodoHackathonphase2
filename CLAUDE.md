@@ -56,6 +56,10 @@ Specifications are organized in /specs:
 - **Backend**: Python FastAPI, SQLModel ORM
 - **Database**: Neon Serverless PostgreSQL
 - **Authentication**: HTTP-only cookies, JWT tokens
+- **Containerization (Phase IV)**: Docker Desktop 4.53+ with Gordon AI agent
+- **Orchestration (Phase IV)**: Kubernetes via Minikube (local cluster only)
+- **Package Manager (Phase IV)**: Helm 3.x (all app deployments via Helm charts)
+- **AI DevOps (Phase IV)**: kubectl-ai (natural language kubectl), kagent (cluster health)
 
 ### Key Components
 - **Multi-User System**: Each user has isolated data space
@@ -131,6 +135,31 @@ uvicorn main:app --reload --port 8000
 ## Project Structure
 - /frontend - Next.js 16 app
 - /backend - Python FastAPI server
+- /helm - Helm charts for Kubernetes deployment (Phase IV)
+
+### Phase IV Directory Layout
+```
+phase2/
+├── frontend/
+│   └── Dockerfile          # Multi-stage: node:18-alpine builder → runner
+├── backend/
+│   └── Dockerfile          # Single-stage: python:3.11-slim
+└── helm/
+    └── todo-chatbot/
+        ├── Chart.yaml       # name: todo-chatbot, version: 1.0.0
+        ├── values.yaml      # replicas, image names, ports (NO secrets)
+        └── templates/
+            ├── secret.yaml              # K8s Secret for AUTH_SECRET, DATABASE_URL, GROQ_API_KEY
+            ├── backend-deployment.yaml
+            ├── backend-service.yaml     # ClusterIP — internal only
+            ├── frontend-deployment.yaml
+            └── frontend-service.yaml    # NodePort or LoadBalancer — browser access
+```
+
+### Helm values.yaml conventions
+- Never put secret values in values.yaml (committed to git)
+- Use `--set-string` at `helm install` time for secrets
+- values.yaml holds: image names, replica counts, port numbers, resource limits
 
 ## Development Workflow
 1. Read spec: @specs/features/[feature].md
@@ -143,9 +172,74 @@ uvicorn main:app --reload --port 8000
 - Backend: cd backend && uvicorn main:app --reload
 - Both: docker-compose up
 
+## Phase IV — Kubernetes Commands
+
+### Start Minikube cluster
+```
+minikube start --driver=docker
+```
+
+### Build and load images
+```
+docker build -t todo-frontend:latest ./frontend
+docker build -t todo-backend:latest ./backend
+minikube image load todo-frontend:latest
+minikube image load todo-backend:latest
+```
+
+### Gordon (Docker AI Agent)
+```
+docker ai "What can you do?"
+docker ai "build the backend image from backend/Dockerfile"
+docker ai "show me running containers"
+```
+Enable Gordon: Docker Desktop Settings > Beta features > toggle Docker AI on.
+
+### Deploy with Helm
+```
+helm install todo-chatbot ./helm/todo-chatbot \
+  --set-string secret.authSecret="<value>" \
+  --set-string secret.databaseUrl="<value>" \
+  --set-string secret.groqApiKey="<value>"
+
+helm upgrade todo-chatbot ./helm/todo-chatbot   # re-deploy after changes
+helm rollback todo-chatbot 1                    # roll back to revision 1
+helm uninstall todo-chatbot                     # tear down
+```
+
+### Expose services
+```
+minikube tunnel        # expose LoadBalancer services to localhost
+minikube service list  # show all service URLs
+```
+
+### kubectl-ai (AI-assisted kubectl)
+```
+kubectl-ai "deploy the todo frontend with 2 replicas"
+kubectl-ai "check why the pods are failing"
+kubectl-ai "scale the backend to handle more load"
+kubectl-ai "show me the logs for the backend pod"
+```
+
+### kagent (AI cluster operations)
+```
+kagent "analyze the cluster health"
+kagent "optimize resource allocation"
+kagent "why is the frontend pod in CrashLoopBackOff?"
+```
+
+### Verify deployment
+```
+kubectl get pods
+kubectl get services
+kubectl describe pod <pod-name>
+kubectl logs <pod-name>
+```
+
 ## Base URL
 - Development: http://localhost:8000
 - Production: https://api.example.com
+- Minikube (Phase IV): http://localhost (via `minikube tunnel`) or NodePort URL from `minikube service list`
 
 ## Authentication
 All endpoints require JWT token in header:
@@ -234,7 +328,12 @@ Response: Updated Task object
 - Node.js 18+ for frontend
 - Python 3.9+ for backend
 - PostgreSQL-compatible database (Neon Serverless recommended)
-- Docker (optional, for containerized deployment)
+- Docker Desktop 4.53+ (required for Phase IV — enables Gordon AI agent)
+- Minikube: local Kubernetes cluster (Phase IV)
+- kubectl: Kubernetes CLI (bundled with Docker Desktop or install separately)
+- Helm 3.x: Kubernetes package manager (Phase IV)
+- kubectl-ai: AI-assisted kubectl commands (Phase IV — requires Go)
+- kagent: AI cluster operations (Phase IV)
 
 ### JWT Token Refresh Mechanism
 - Access tokens: 15 minutes (stored in-memory on frontend)
@@ -350,9 +449,14 @@ Referencing Specs in Claude Code
 
 ### Basic Deployment Setup
 - Local development with hot reloading
-- Docker Compose for containerized local development
+- Docker Compose for containerized local development (Phase II/III)
 - Environment-specific configuration via .env files
-- Simple production deployment
+- Simple production deployment (Vercel + Render)
+- Phase IV: Minikube local Kubernetes cluster via Helm charts
+  - Images built with Docker Desktop (Gordon for AI-assisted builds)
+  - Deployed with `helm install todo-chatbot ./helm/todo-chatbot`
+  - Secrets injected at install time via `--set-string` (never committed)
+  - Services exposed via `minikube tunnel` or NodePort
 
 ### Basic Security Headers
 - Strict-Transport-Security for HTTPS enforcement
@@ -376,3 +480,9 @@ Referencing Specs in Claude Code
 - Schema changes must be documented in database specs first
 - Use Claude Code for all implementations (no manual coding)
 - Follow Agentic Dev Stack: Write spec → Generate plan → Break into tasks → Implement
+- All Kubernetes deployments MUST use Helm charts — no raw `kubectl apply` for app resources
+- Kubernetes Secrets MUST hold AUTH_SECRET, DATABASE_URL, GROQ_API_KEY — never in values.yaml
+- Docker images MUST NOT embed secrets or environment-specific values
+- Minikube is the ONLY Kubernetes target — no cloud K8s (EKS, GKE, AKS)
+- External Neon DB only — no PostgreSQL pod in the cluster
+- Gordon, kubectl-ai, and kagent usage MUST be documented in PHR records

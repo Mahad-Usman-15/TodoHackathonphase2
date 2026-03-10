@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.backendServiceName }}
+  labels:
+    app: todo-chatbot-backend
+spec:
+  type: {{ .Values.service.backend.type }}
+  selector:
+    app: todo-chatbot-backend
+  ports:
+    - protocol: TCP
+      port: {{ .Values.service.backend.port }}
+      targetPort: {{ .Values.service.backend.targetPort }}

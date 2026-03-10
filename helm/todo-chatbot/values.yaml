@@ -1,0 +1,33 @@
+# values.yaml — NO secrets here.
+# Secrets are injected at install time via --set-string:
+#   helm install todo-chatbot ./helm/todo-chatbot \
+#     --set-string secret.authSecret="<AUTH_SECRET>" \
+#     --set-string secret.databaseUrl="<DATABASE_URL>" \
+#     --set-string secret.groqApiKey="<GROQ_API_KEY>"
+
+replicaCount:
+  frontend: 1
+  backend: 1
+
+image:
+  frontend:
+    repository: todo-frontend
+    tag: latest
+    pullPolicy: Never
+  backend:
+    repository: todo-backend
+    tag: latest
+    pullPolicy: Never
+
+service:
+  frontend:
+    type: NodePort
+    port: 3000
+    targetPort: 3000
+  backend:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+backendServiceName: todo-chatbot-backend
+secretName: todo-chatbot-secrets

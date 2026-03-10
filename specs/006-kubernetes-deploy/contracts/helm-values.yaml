@@ -1,0 +1,48 @@
+# Helm Values Contract — todo-chatbot chart
+# This is the DESIGN CONTRACT for values.yaml (no secrets; for reference/review)
+# The actual file lives at: helm/todo-chatbot/values.yaml
+
+# ── Replica counts ────────────────────────────────────────────────────────────
+replicaCount:
+  frontend: 1
+  backend: 1
+
+# ── Container images ──────────────────────────────────────────────────────────
+image:
+  frontend:
+    repository: todo-frontend
+    tag: latest
+    pullPolicy: Never         # Never = use locally loaded Minikube image; no registry pull
+  backend:
+    repository: todo-backend
+    tag: latest
+    pullPolicy: Never
+
+# ── Service ports ─────────────────────────────────────────────────────────────
+service:
+  frontend:
+    type: NodePort            # Browser access via: minikube service todo-chatbot-frontend --url
+    port: 3000
+    targetPort: 3000
+  backend:
+    type: ClusterIP           # Internal only — frontend rewrites proxy connects server-side
+    port: 8000
+    targetPort: 8000
+
+# ── Backend service DNS name (used by frontend BACKEND_URL env var) ───────────
+backendServiceName: todo-chatbot-backend
+
+# ── Secret resource name (referenced by deployment envFrom) ───────────────────
+secretName: todo-chatbot-secrets
+
+# ── SECRETS: Never put values here ───────────────────────────────────────────
+# These keys are injected ONLY at install time via --set-string:
+#
+#   helm install todo-chatbot ./helm/todo-chatbot \
+#     --set-string secret.authSecret="<AUTH_SECRET>" \
+#     --set-string secret.databaseUrl="<DATABASE_URL>" \
+#     --set-string secret.groqApiKey="<GROQ_API_KEY>"
+#
+# secret.authSecret  → K8s Secret key: AUTH_SECRET
+# secret.databaseUrl → K8s Secret key: DATABASE_URL
+# secret.groqApiKey  → K8s Secret key: GROQ_API_KEY
